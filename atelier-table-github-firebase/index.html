@@ -1,0 +1,3889 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atelier Table Online • GitHub Pages + Firebase</title>
+  <style>
+    :root{
+  --bg:#070611;
+  --bg-2:#0d0a1a;
+  --panel:rgba(18,14,34,.84);
+  --panel-2:rgba(23,18,43,.96);
+  --panel-3:rgba(31,24,58,.92);
+  --line:rgba(173,145,255,.12);
+  --line-2:rgba(198,174,255,.26);
+  --text:#f5f1ff;
+  --muted:#b9acd9;
+  --accent:#8b5cf6;
+  --accent-2:#c084fc;
+  --accent-3:#60a5fa;
+  --accent-soft:rgba(139,92,246,.18);
+  --accent-soft-2:rgba(192,132,252,.16);
+  --ok:#34d399;
+  --warn:#fbbf24;
+  --danger:#fb7185;
+  --shadow:0 24px 80px rgba(0,0,0,.45);
+  --shadow-soft:0 16px 48px rgba(8,6,18,.36);
+  --glow:0 0 0 1px rgba(192,132,252,.18), 0 0 22px rgba(139,92,246,.18);
+  --radius:20px;
+  --sidebar-w: 304px;
+  --topbar-h: 58px;
+  --toolbar-size: 42px;
+}
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 12% 10%, rgba(139,92,246,.20), transparent 24%),
+        radial-gradient(circle at 85% 14%, rgba(96,165,250,.14), transparent 22%),
+        radial-gradient(circle at 50% 100%, rgba(192,132,252,.10), transparent 34%),
+        linear-gradient(180deg, #090614, #0b0916 38%, #05040c);
+      overflow:hidden;
+    }
+
+    button,input,textarea,select{font:inherit;color:inherit}
+    button,input,textarea,select,[tabindex]{outline:none}
+    button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{
+      box-shadow:0 0 0 3px rgba(192,132,252,.34), 0 0 0 6px rgba(96,165,250,.12);
+    }
+
+    .app{
+      height:100%;
+      display:grid;
+      grid-template-columns: var(--sidebar-w) minmax(0,1fr);
+      grid-template-rows: var(--topbar-h) minmax(0,1fr);
+      transition:grid-template-columns .18s ease;
+    }
+
+    .app.sidebar-collapsed{
+      grid-template-columns: 0 minmax(0,1fr);
+    }
+
+    .topbar{
+      grid-column:1 / 3;
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      gap:14px;
+      align-items:center;
+      padding:12px 16px;
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(14,11,28,.88), rgba(10,8,21,.82));
+      backdrop-filter:blur(18px) saturate(1.2);
+      box-shadow:0 10px 40px rgba(0,0,0,.22);
+      position:relative;
+      z-index:40;
+    }
+
+    .sidebar{
+      min-width:0;
+      border-right:1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(16,12,31,.98), rgba(10,8,21,.96)),
+        radial-gradient(circle at top left, rgba(139,92,246,.12), transparent 32%);
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      box-shadow:22px 0 48px rgba(0,0,0,.18);
+      transition:opacity .18s ease, transform .18s ease;
+    }
+
+    .app.sidebar-collapsed .sidebar{
+      opacity:0;
+      pointer-events:none;
+      transform:translateX(-16px);
+    }
+
+    .main{
+      min-width:0;
+      min-height:0;
+      position:relative;
+    }
+
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      min-width:0;
+    }
+
+    .brand-mark{
+      width:38px;height:38px;border-radius:14px;
+      display:grid;place-items:center;
+      border:1px solid rgba(192,132,252,.28);
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.22), transparent 34%),
+        linear-gradient(135deg, rgba(139,92,246,.34), rgba(96,165,250,.18));
+      box-shadow:0 0 0 1px rgba(192,132,252,.10), 0 12px 28px rgba(63,31,119,.32);
+      font-weight:800;
+      letter-spacing:.04em;
+      flex:0 0 auto;
+    }
+
+    .brand h1{margin:0;font-size:1rem;font-weight:700}
+    .brand p{margin:2px 0 0;font-size:.84rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    .top-actions,
+    .top-right,
+    .toolbar-col,
+    .zoom-col,
+    .chip-row,
+    .seg,
+    .row,
+    .row-3,
+    .scene-actions,
+    .section-actions,
+    .inline-actions,
+    .player-actions,
+    .inspector-actions,
+    .session-actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .row-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+
+    .btn,.icon-btn,.chip,.tab-btn,.tool-btn,.scene-card button,.asset-card button,.layer-row button,.player-card button,.object-item button,.list-btn{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(31,24,58,.94), rgba(19,15,35,.92));
+      color:var(--text);
+      box-shadow:var(--shadow-soft);
+      transition:.18s ease, box-shadow .22s ease;
+    }
+
+    .btn,.chip,.tab-btn,.list-btn{
+      min-height:38px;
+      padding:0 12px;
+      border-radius:12px;
+      cursor:pointer;
+    }
+
+    .btn:hover,.icon-btn:hover,.chip:hover,.tab-btn:hover,.tool-btn:hover,.scene-card button:hover,.asset-card button:hover,.layer-row button:hover,.player-card button:hover,.object-item button:hover,.list-btn:hover{
+      background:linear-gradient(180deg, rgba(53,39,97,.98), rgba(26,19,49,.96));
+      border-color:var(--line-2);
+      box-shadow:0 10px 24px rgba(0,0,0,.28), 0 0 0 1px rgba(192,132,252,.12), 0 0 18px rgba(139,92,246,.16);
+      transform:translateY(-1px);
+    }
+
+    .btn.primary,.tab-btn.active,.tool-btn.active,.chip.active,.list-btn.active{
+      background:linear-gradient(180deg, rgba(98,57,192,.78), rgba(64,31,131,.78));
+      border-color:rgba(206,173,255,.42);
+      box-shadow:0 10px 22px rgba(78,39,151,.28), 0 0 18px rgba(139,92,246,.24);
+    }
+
+    .btn.danger{border-color:rgba(255,155,166,.28)}
+    .btn.ok{border-color:rgba(139,216,187,.26)}
+
+    .icon-btn,.tool-btn{
+      width:var(--toolbar-size);
+      height:var(--toolbar-size);
+      display:grid;
+      place-items:center;
+      border-radius:14px;
+      cursor:pointer;
+      backdrop-filter:blur(12px) saturate(1.15);
+      background:linear-gradient(180deg, rgba(33,26,59,.92), rgba(18,14,34,.94));
+    }
+
+    .tool-btn.small,.icon-btn.small{width:36px;height:36px;border-radius:12px}
+
+    .sidebar-head{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      display:grid;
+      gap:10px;
+    }
+
+    .tab-row{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:8px;
+    }
+
+    .tab-btn{
+      padding:0 8px;
+      min-height:40px;
+      font-size:.9rem;
+    }
+
+    .sidebar-body{
+      min-height:0;
+      overflow:auto;
+      padding:14px;
+      display:grid;
+      gap:14px;
+      align-content:start;
+    }
+
+    .panel{display:none;gap:14px;align-content:start}
+    .panel.active{display:grid}
+
+    .section{
+      border:1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(20,16,37,.94), rgba(13,10,26,.92)),
+        radial-gradient(circle at top left, rgba(139,92,246,.10), transparent 40%);
+      border-radius:18px;
+      padding:14px;
+      display:grid;
+      gap:12px;
+      box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.03);
+    }
+
+    .section h2,.section h3,.section h4{margin:0}
+    .section h2{font-size:1rem}
+    .section h3{font-size:.95rem}
+    .sub{color:var(--muted);font-size:.82rem;line-height:1.4}
+    .tiny{color:var(--muted);font-size:.8rem;line-height:1.4}
+    .muted{color:var(--muted)}
+
+    .field{display:grid;gap:6px}
+    .field label{font-size:.84rem;color:var(--muted)}
+    .field input[type="text"],
+    .field input[type="number"],
+    .field textarea,
+    .field select{
+      width:100%;
+      min-height:40px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(9,7,19,.82);
+      color:var(--text);
+      padding:10px 12px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+    }
+    .field textarea{min-height:88px;resize:vertical}
+    .field input[type="range"]{width:100%}
+
+    .scene-list,.asset-grid,.layer-list,.player-list,.object-list,.dice-log,.initiative-list{
+      display:grid;
+      gap:10px;
+    }
+
+    .scene-card,.asset-card,.layer-row,.player-card,.object-item,.log-item,.initiative-item{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(27,21,49,.92), rgba(15,11,29,.90));
+      border-radius:14px;
+      box-shadow:var(--shadow-soft);
+    }
+
+    .scene-card,.player-card,.object-item,.initiative-item,.log-item{
+      padding:12px;
+      display:grid;
+      gap:8px;
+    }
+
+    .scene-card.active{
+      border-color:rgba(206,173,255,.42);
+      background:
+        linear-gradient(180deg, rgba(72,46,129,.62), rgba(21,15,39,.94)),
+        radial-gradient(circle at top left, rgba(192,132,252,.14), transparent 42%);
+      box-shadow:0 14px 30px rgba(22,12,43,.34), 0 0 0 1px rgba(192,132,252,.10), 0 0 22px rgba(139,92,246,.14);
+    }
+
+    .scene-top,.player-top,.object-top,.initiative-grid{
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      align-items:center;
+    }
+
+    .scene-title,.player-name,.object-top strong{font-size:.92rem;font-weight:700}
+
+    .asset-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .asset-card{
+      overflow:hidden;
+      display:grid;
+      grid-template-rows:92px auto auto;
+    }
+
+    .asset-card img{
+      width:100%;
+      height:92px;
+      object-fit:cover;
+      display:block;
+      background:linear-gradient(180deg, #0e0a18, #06050c);
+    }
+
+    .asset-card strong{
+      font-size:.84rem;
+      padding:10px 10px 0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .asset-card button{
+      margin:8px 10px 10px;
+      min-height:34px;
+      border-radius:10px;
+      cursor:pointer;
+    }
+
+    .layer-row{
+      padding:12px;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto auto;
+      gap:8px;
+      align-items:center;
+    }
+
+    .layer-row .meta{font-size:.8rem;color:var(--muted)}
+
+    .player-dot{
+      width:12px;height:12px;border-radius:50%;border:1px solid rgba(255,255,255,.2);
+      flex:0 0 auto;
+    }
+
+    .status-dot{
+      width:9px;height:9px;border-radius:50%;background:var(--ok);display:inline-block;
+    }
+
+    .status-dot.off{background:var(--muted)}
+
+    .main-shell{
+      position:absolute;
+      inset:0;
+      padding:16px;
+      background:
+        radial-gradient(circle at 10% 14%, rgba(139,92,246,.07), transparent 20%),
+        radial-gradient(circle at 90% 10%, rgba(96,165,250,.06), transparent 16%);
+    }
+
+    .stage-shell{
+      position:absolute;
+      inset:16px;
+      border:1px solid rgba(192,132,252,.18);
+      border-radius:26px;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at top, rgba(139,92,246,.08), transparent 30%),
+        linear-gradient(180deg, rgba(9,7,18,.86), rgba(4,4,12,.94)),
+        #06070f;
+      box-shadow:0 28px 80px rgba(0,0,0,.42), 0 0 0 1px rgba(255,255,255,.02), inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    .viewport{
+      position:absolute;
+      inset:0;
+      overflow:hidden;
+      cursor:default;
+    }
+
+    .stage-content{
+      position:absolute;
+      left:0;top:0;
+      transform-origin:top left;
+      width:1920px;height:1080px;
+      user-select:none;
+      touch-action:none;
+      will-change:transform;
+    }
+
+    .map-layer,.grid-layer,.barrier-layer,.fog-layer,.entity-layer{
+      position:absolute;
+      inset:0;
+    }
+
+    .map-layer img{width:100%;height:100%;display:block;object-fit:fill;pointer-events:none;user-select:none}
+    .grid-layer,.barrier-layer,.fog-layer{pointer-events:none}
+
+    .toolbar-float,.zoom-float,.status-float,.inspector{
+      position:absolute;
+      z-index:30;
+    }
+
+    .toolbar-float{
+      top:28px;left:28px;
+      display:grid;
+      gap:10px;
+    }
+
+    .tool-stack{
+      display:grid;
+      gap:8px;
+      padding:8px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:linear-gradient(180deg, rgba(18,14,34,.84), rgba(11,9,22,.82));
+      backdrop-filter:blur(14px) saturate(1.15);
+      box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.03);
+    }
+
+    .zoom-float{
+      top:28px;right:28px;
+      display:grid;
+      gap:8px;
+    }
+
+    .status-float{
+      left:28px;right:28px;bottom:24px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-end;
+      pointer-events:none;
+    }
+
+    .pill,.inspector{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(16,12,31,.90), rgba(10,8,21,.88));
+      backdrop-filter:blur(14px) saturate(1.15);
+      box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.03);
+      pointer-events:auto;
+    }
+
+    .pill{
+      min-height:50px;
+      border-radius:16px;
+      padding:10px 12px;
+      color:var(--muted);
+      display:flex;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .chip-row{gap:6px}
+    .chip.small{min-height:30px;padding:0 10px;border-radius:999px;font-size:.78rem}
+
+    .inspector{
+      width:340px;
+      max-width:min(340px, calc(100vw - 72px));
+      border-radius:20px;
+      padding:14px;
+      display:none;
+      gap:12px;
+    }
+
+    .inspector.visible{display:grid}
+
+    .inspector-head{
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      align-items:flex-start;
+    }
+
+    .inspector h3{margin:0;font-size:.96rem}
+
+    .welcome{
+      position:absolute;
+      left:50%;top:50%;transform:translate(-50%, -50%);
+      width:min(560px, calc(100% - 48px));
+      border:1px solid rgba(192,132,252,.18);
+      background:
+        radial-gradient(circle at top, rgba(139,92,246,.12), transparent 42%),
+        linear-gradient(180deg, rgba(15,12,29,.88), rgba(9,8,18,.92));
+      backdrop-filter:blur(18px) saturate(1.15);
+      box-shadow:0 28px 80px rgba(0,0,0,.42), 0 0 0 1px rgba(255,255,255,.02);
+      border-radius:24px;
+      padding:28px;
+      text-align:center;
+      z-index:10;
+    }
+
+    .welcome h2{margin:0 0 10px;font-size:1.35rem}
+    .welcome p{margin:0;color:var(--muted);line-height:1.6}
+
+    .entity{position:absolute;touch-action:none}
+    .token{
+      overflow:visible;
+      cursor:grab;
+      will-change:transform,left,top,width,height;
+      transform-origin:center center;
+    }
+    .token-visual{
+      position:absolute;inset:0;
+      display:flex;align-items:center;justify-content:center;
+      pointer-events:none;
+      overflow:visible;
+    }
+    .token-hit{
+      position:absolute;inset:0;
+      background:transparent;
+      border:none;
+      box-shadow:none;
+      overflow:visible;
+      pointer-events:auto;
+      isolation:isolate;
+    }
+    .token.box-shape .token-hit{border-radius:16px}
+    .token.contour-shape .token-hit{border-radius:0}
+    .token-media{
+      position:absolute;inset:0;
+      width:100%;height:100%;display:block;object-fit:contain;object-position:center center;pointer-events:none;
+      background:transparent;
+      user-select:none;
+      -webkit-user-drag:none;
+      image-rendering:auto;
+      backface-visibility:hidden;
+      transform:translateZ(0);
+      filter:
+        drop-shadow(0 8px 18px rgba(0,0,0,.28))
+        drop-shadow(0 0 12px rgba(96,165,250,.05));
+      will-change:transform,filter;
+    }
+    .token.hidden-token{opacity:.5;filter:grayscale(.18)}
+    .token.selected .token-media{
+      filter:
+        drop-shadow(0 0 1px rgba(216,180,255,.98))
+        drop-shadow(0 0 10px rgba(192,132,252,.42))
+        drop-shadow(0 0 20px rgba(139,92,246,.22))
+        drop-shadow(0 12px 20px rgba(0,0,0,.30));
+    }
+
+    .token-label{
+      position:absolute;
+      left:50%;bottom:-28px;transform:translateX(-50%);
+      padding:4px 8px;border-radius:999px;
+      background:linear-gradient(180deg, rgba(12,10,22,.92), rgba(8,7,15,.92));
+      border:1px solid rgba(192,132,252,.16);
+      box-shadow:0 8px 18px rgba(0,0,0,.28);
+      font-size:.74rem;white-space:nowrap;pointer-events:none;
+    }
+
+    .token-handle,.rotate-handle{
+      position:absolute;width:14px;height:14px;border-radius:50%;
+      background:linear-gradient(180deg, var(--accent-2), var(--accent));
+      border:2px solid #0a0815;
+      box-shadow:0 0 0 2px rgba(192,132,252,.16), 0 0 16px rgba(139,92,246,.26);
+      display:none;
+    }
+
+    .rotate-line{
+      position:absolute;left:50%;top:-12px;transform:translateX(-50%);
+      width:2px;height:14px;background:rgba(192,132,252,.56);display:none;
+    }
+
+    .token.selected .token-handle,.token.selected .rotate-handle,.token.selected .rotate-line{display:block}
+    .token-handle.br{right:-7px;bottom:-7px;cursor:nwse-resize}
+    .rotate-handle{left:50%;top:-24px;transform:translateX(-50%);cursor:grab}
+
+    .note{
+      min-width:28px;min-height:28px;border-radius:12px;display:grid;place-items:center;
+      border:1px solid rgba(192,132,252,.18);
+      background:linear-gradient(180deg, rgba(23,18,43,.96), rgba(10,8,21,.94));
+      box-shadow:0 12px 24px rgba(0,0,0,.32), 0 0 18px rgba(139,92,246,.12);
+      color:var(--warn);cursor:grab;
+    }
+    .note.gm-only::after{
+      content:'GM';position:absolute;top:-10px;right:-8px;
+      font-size:.6rem;padding:2px 5px;border-radius:999px;
+      background:#0c1119;border:1px solid rgba(255,255,255,.1);color:var(--muted)
+    }
+    .note.selected{outline:2px solid rgba(255,210,127,.56);outline-offset:2px}
+
+    .empty{color:var(--muted);font-size:.86rem;padding:2px 0}
+    .hidden{display:none !important}
+    input[type="file"]{display:none}
+    .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+    body::before{
+      content:'';
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(139,92,246,.07), transparent 24%),
+        radial-gradient(circle at 100% 20%, rgba(96,165,250,.05), transparent 18%);
+      mix-blend-mode:screen;
+      opacity:.9;
+    }
+
+    ::-webkit-scrollbar{width:12px;height:12px}
+    ::-webkit-scrollbar-track{background:rgba(10,8,21,.78)}
+    ::-webkit-scrollbar-thumb{
+      background:linear-gradient(180deg, rgba(96,165,250,.36), rgba(139,92,246,.52));
+      border:2px solid rgba(10,8,21,.82);
+      border-radius:999px;
+    }
+    ::-webkit-scrollbar-thumb:hover{
+      background:linear-gradient(180deg, rgba(124,184,255,.42), rgba(192,132,252,.62));
+    }
+
+    .topbar::after{
+      content:'';
+      position:absolute;
+      left:16px; right:16px; bottom:-1px;
+      height:1px;
+      background:linear-gradient(90deg, transparent, rgba(192,132,252,.28), rgba(96,165,250,.22), transparent);
+      pointer-events:none;
+    }
+
+    .sidebar-head{
+      background:linear-gradient(180deg, rgba(17,13,32,.92), rgba(13,10,26,.86));
+      box-shadow:inset 0 -1px 0 rgba(255,255,255,.02);
+    }
+
+    .brand h1{
+      background:linear-gradient(90deg, #f8f4ff, #dcc7ff 55%, #a8d2ff);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+
+    .brand p,.sub,.tiny,.muted,.field label,.layer-row .meta{color:var(--muted)}
+
+    .tab-btn{
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+    }
+
+    .section h2,.section h3,.section h4,.scene-title,.player-name,.object-top strong,.asset-card strong{
+      color:var(--text);
+      letter-spacing:.01em;
+    }
+
+    .stage-shell::before{
+      content:'';
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(192,132,252,.08), transparent 28%),
+        linear-gradient(180deg, rgba(255,255,255,.02), transparent 18%);
+      z-index:0;
+    }
+
+    .stage-shell::after{
+      content:'';
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.02), inset 0 0 80px rgba(139,92,246,.04);
+      border-radius:inherit;
+      z-index:6;
+    }
+
+    .viewport,.stage-content,.map-layer,.grid-layer,.barrier-layer,.fog-layer,.entity-layer{
+      z-index:1;
+    }
+
+    .tool-btn,.icon-btn,.btn,.chip,.tab-btn,.list-btn{
+      position:relative;
+      overflow:hidden;
+      isolation:isolate;
+    }
+
+    .tool-btn::before,.icon-btn::before,.btn::before,.chip::before,.tab-btn::before,.list-btn::before{
+      content:'';
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), transparent 42%);
+      opacity:.7;
+      pointer-events:none;
+      z-index:-1;
+    }
+
+    .pill{
+      color:var(--text);
+      box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.04), 0 0 20px rgba(139,92,246,.08);
+    }
+
+    .inspector{
+      box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.03), 0 0 26px rgba(139,92,246,.10);
+    }
+
+    .scene-card,.asset-card,.layer-row,.player-card,.object-item,.log-item,.initiative-item,.section{
+      backdrop-filter:blur(10px) saturate(1.04);
+    }
+
+    .scene-card:hover,.asset-card:hover,.layer-row:hover,.player-card:hover,.object-item:hover,.initiative-item:hover,.log-item:hover{
+      border-color:rgba(192,132,252,.24);
+      transform:translateY(-1px);
+      box-shadow:0 16px 32px rgba(0,0,0,.26), 0 0 18px rgba(139,92,246,.08);
+    }
+
+    .asset-card img{
+      filter:saturate(1.03) contrast(1.03);
+    }
+
+    .map-layer{
+      filter:saturate(1.03) contrast(1.02);
+    }
+
+    .token.selected .token-label{
+      border-color:rgba(192,132,252,.26);
+      box-shadow:0 10px 22px rgba(0,0,0,.32), 0 0 16px rgba(139,92,246,.12);
+    }
+
+    .note.selected{
+      outline:2px solid rgba(192,132,252,.62);
+      outline-offset:2px;
+      box-shadow:0 0 0 4px rgba(139,92,246,.12), 0 12px 24px rgba(0,0,0,.34);
+    }
+
+    @media (max-width: 1080px){
+      .topbar{grid-template-columns:auto 1fr;}
+      .top-right{display:none}
+      .app{grid-template-columns: minmax(0,1fr)}
+      .sidebar{position:absolute;left:0;top:var(--topbar-h);bottom:0;width:min(360px, 92vw);z-index:45;box-shadow:var(--shadow)}
+      .app.sidebar-collapsed .sidebar{transform:translateX(-100%);opacity:1}
+      .topbar{grid-column:1}
+      .main{grid-column:1}
+      .status-float{left:18px;right:18px;bottom:16px;flex-direction:column;align-items:stretch}
+      .inspector{width:auto;max-width:none}
+    }
+
+    @media (max-width: 780px){
+      .top-actions{display:none}
+      .stage-shell{inset:12px}
+      .toolbar-float{left:18px;top:18px}
+      .zoom-float{right:18px;top:18px}
+      .tab-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+
+    body:not(.room-ready) .app{
+      filter:blur(4px) saturate(.85);
+      pointer-events:none;
+      user-select:none;
+    }
+    .room-overlay{
+      position:fixed;
+      inset:0;
+      z-index:999;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      background:
+        radial-gradient(circle at top, rgba(139,92,246,.22), transparent 45%),
+        linear-gradient(180deg, rgba(4,3,10,.86), rgba(4,3,10,.94));
+      backdrop-filter: blur(10px);
+    }
+    .room-card{
+      width:min(920px, 100%);
+      border:1px solid rgba(192,132,252,.18);
+      background:linear-gradient(180deg, rgba(18,14,34,.94), rgba(13,10,26,.97));
+      border-radius:28px;
+      box-shadow:0 40px 120px rgba(0,0,0,.45), 0 0 32px rgba(139,92,246,.18);
+      padding:24px;
+    }
+    .room-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:18px;
+    }
+    .room-title{
+      margin:0;
+      font-size:clamp(24px, 4vw, 34px);
+      line-height:1.05;
+      letter-spacing:-.03em;
+    }
+    .room-subtitle{
+      margin:6px 0 0;
+      color:var(--muted);
+      max-width:62ch;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      min-height:32px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--muted);
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.02em;
+      text-transform:uppercase;
+    }
+    .room-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:18px;
+    }
+    .room-section{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:22px;
+      padding:18px;
+      box-shadow:var(--shadow-soft);
+    }
+    .room-section h2{
+      margin:0 0 6px;
+      font-size:18px;
+    }
+    .room-section p{
+      margin:0 0 14px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.5;
+    }
+    .room-stack{display:grid;gap:12px}
+    .room-inline{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      align-items:end;
+    }
+    .room-feedback{
+      min-height:22px;
+      margin-top:14px;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .room-feedback.error{color:#fecaca}
+    .room-feedback.ok{color:#bbf7d0}
+    .room-hint{
+      margin-top:14px;
+      color:var(--muted2);
+      font-size:12px;
+      line-height:1.5;
+    }
+    body.role-player .top-actions,
+    body.role-player [data-tab="campaign"],
+    body.role-player [data-tab="library"],
+    body.role-player [data-tab="layers"],
+    body.role-player [data-panel="campaign"],
+    body.role-player [data-panel="library"],
+    body.role-player [data-panel="layers"],
+    body.role-player [data-tool="note"],
+    body.role-player [data-tool="wall"],
+    body.role-player [data-tool="door"],
+    body.role-player #gridToggleBtn,
+    body.role-player #snapToggleBtn,
+    body.role-player #previewModeBtn{
+      display:none !important;
+    }
+    body.role-player .tab-row{
+      grid-template-columns:1fr;
+    }
+    body.role-player .sidebar{
+      width:min(320px, 90vw);
+    }
+    body.role-player .sidebar-head strong::after{
+      content:" • jogador";
+      color:var(--accent-2);
+      font-weight:600;
+    }
+    @media (max-width: 900px){
+      .room-grid{grid-template-columns:1fr}
+      .room-inline{grid-template-columns:1fr}
+      .room-head{flex-direction:column}
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="room-overlay" id="roomOverlay">
+    <div class="room-card">
+      <div class="room-head">
+        <div>
+          <div class="pill" id="firebaseStatusPill">Firebase pendente</div>
+          <h1 class="room-title">Atelier Table Online</h1>
+          <p class="room-subtitle">Use este pacote no GitHub Pages e sincronize a mesa pelo Firebase. Mestre cria a sala, players entram com o código e pronto. Milagre raro, mas acontece.</p>
+        </div>
+      </div>
+
+      <div class="room-grid">
+        <section class="room-section">
+          <h2>Criar sala</h2>
+          <p>Abra uma mesa nova como mestre e gere um código para os jogadores entrarem.</p>
+          <div class="room-stack">
+            <div class="field">
+              <label for="createNameInput">Seu nome</label>
+              <input type="text" id="createNameInput" placeholder="Ex.: zK" />
+            </div>
+            <div class="field">
+              <label for="createRoomNameInput">Nome da campanha</label>
+              <input type="text" id="createRoomNameInput" placeholder="Ex.: Ordem na Mansão" />
+            </div>
+            <button class="btn primary" id="createRoomBtn">Criar sala</button>
+          </div>
+        </section>
+
+        <section class="room-section">
+          <h2>Entrar em sala</h2>
+          <p>Entre como player usando o código que o mestre te passou.</p>
+          <div class="room-stack">
+            <div class="field">
+              <label for="joinNameInput">Seu nome</label>
+              <input type="text" id="joinNameInput" placeholder="Ex.: Jogador 1" />
+            </div>
+            <div class="room-inline">
+              <div class="field">
+                <label for="joinRoomCodeInput">Código da sala</label>
+                <input type="text" id="joinRoomCodeInput" placeholder="Ex.: AB12CD" maxlength="12" />
+              </div>
+              <button class="btn primary" id="joinRoomBtn">Entrar</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="room-feedback" id="roomFeedback"></div>
+      <div class="room-hint" id="roomHint">Preencha o <code>firebase-config.js</code> antes de publicar. Enquanto isso, a mesa até abre local, mas não sincroniza nada. O universo não costuma oferecer multiplayer de graça por osmose.</div>
+    </div>
+  </div>
+
+  <div class="app" id="app">
+
+    <header class="topbar">
+      <div class="brand">
+        <button class="icon-btn" id="toggleSidebarBtn" title="Mostrar ou esconder barra lateral">☰</button>
+        <div class="brand-mark">AT</div>
+        <div>
+          <h1>Atelier Table</h1>
+          <p id="brandMeta">Mesa dark neon com foco visual e legibilidade.</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <label class="btn" for="mapInput">Mapa</label>
+        <label class="btn" for="assetInput">Assets</label>
+        <button class="btn" id="saveBtn">Salvar</button>
+        <button class="btn" id="loadBtn">Carregar</button>
+        <button class="btn" id="exportBtn">Exportar</button>
+        <label class="btn" for="importInput">Importar</label>
+      </div>
+
+      <div class="top-right">
+        <button class="btn" id="fitBtn">Ajustar</button>
+        <button class="btn" id="gridToggleBtn">Grid off</button>
+        <button class="btn" id="snapToggleBtn">Snap off</button>
+        <button class="btn" id="previewModeBtn">GM</button>
+      </div>
+    </header>
+
+    <aside class="sidebar" aria-label="Painel lateral">
+      <div class="sidebar-head">
+        <div class="sidebar-title">
+          <strong>Painel</strong>
+          <span class="tiny">menos ruído, mais mapa</span>
+        </div>
+        <div class="tab-row" role="tablist" aria-label="Abas principais">
+          <button class="tab-btn active" data-tab="campaign">Cena</button>
+          <button class="tab-btn" data-tab="library">Assets</button>
+          <button class="tab-btn" data-tab="layers">Visual</button>
+          <button class="tab-btn" data-tab="session">Sessão</button>
+        </div>
+      </div>
+
+      <div class="sidebar-body">
+        <section class="panel active" data-panel="campaign">
+          <details class="accordion" open>
+            <summary>Projeto</summary>
+            <div class="accordion-body">
+              <div class="row">
+                <div class="field">
+                  <label for="campaignNameInput">Campanha</label>
+                  <input type="text" id="campaignNameInput" placeholder="Nome da campanha" />
+                </div>
+                <div class="field">
+                  <label for="sessionNameInput">Sessão</label>
+                  <input type="text" id="sessionNameInput" placeholder="Sessão atual" />
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="accordion" open>
+            <summary>Cenas</summary>
+            <div class="accordion-body">
+              <div class="scene-actions">
+                <button class="btn primary" id="addSceneBtn">Nova</button>
+                <button class="btn" id="duplicateSceneBtn">Duplicar</button>
+              </div>
+              <div class="scene-list" id="sceneList"></div>
+              <div class="section">
+                <div class="row">
+                  <div class="field">
+                    <label for="sceneNameInput">Nome</label>
+                    <input type="text" id="sceneNameInput" placeholder="Cena" />
+                  </div>
+                  <div class="field">
+                    <label for="gridSizeInput">Grid <span id="gridSizeValue">64</span> px</label>
+                    <input type="range" id="gridSizeInput" min="24" max="160" step="4" value="64" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="field">
+                    <label for="sceneWidthInput">Largura</label>
+                    <input type="number" id="sceneWidthInput" min="320" step="32" value="1920" />
+                  </div>
+                  <div class="field">
+                    <label for="sceneHeightInput">Altura</label>
+                    <input type="number" id="sceneHeightInput" min="240" step="32" value="1080" />
+                  </div>
+                </div>
+                <div class="section-actions">
+                  <button class="btn" id="applySceneSizeBtn">Aplicar tamanho</button>
+                  <label class="btn" for="mapInput">Trocar mapa</label>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="accordion">
+            <summary>Jogadores</summary>
+            <div class="accordion-body">
+              <div class="row">
+                <input type="text" id="playerNameInput" placeholder="Nome do jogador" />
+                <select id="playerRoleInput">
+                  <option value="player">Jogador</option>
+                  <option value="observer">Observador</option>
+                  <option value="co-gm">Co-GM</option>
+                </select>
+              </div>
+              <div class="player-actions">
+                <input type="color" id="playerColorInput" value="#5b7cff" aria-label="Cor do jogador" style="width:42px;height:38px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:4px" />
+                <button class="btn primary" id="addPlayerBtn">Adicionar</button>
+              </div>
+              <div class="player-list" id="playerList"></div>
+            </div>
+          </details>
+        </section>
+
+        <section class="panel" data-panel="library">
+          <details class="accordion" open>
+            <summary>Biblioteca</summary>
+            <div class="accordion-body">
+              <div class="asset-grid" id="assetGrid"></div>
+              <div class="empty hidden" id="assetEmpty">Nenhum asset enviado ainda.</div>
+            </div>
+          </details>
+
+          <details class="accordion">
+            <summary>Adicionar rápido</summary>
+            <div class="accordion-body">
+              <div class="field">
+                <label for="quickTokenName">Nome</label>
+                <input type="text" id="quickTokenName" placeholder="Ex.: Guarda 1" />
+              </div>
+              <button class="btn primary" id="createQuickTokenBtn">Criar token</button>
+            </div>
+          </details>
+
+          <details class="accordion">
+            <summary>Objetos da cena</summary>
+            <div class="accordion-body">
+              <div class="object-list" id="objectList"></div>
+            </div>
+          </details>
+        </section>
+
+        <section class="panel" data-panel="layers">
+          <details class="accordion" open>
+            <summary>Camadas</summary>
+            <div class="accordion-body">
+              <div class="layer-list" id="layerList"></div>
+            </div>
+          </details>
+
+          <details class="accordion">
+            <summary>Fog</summary>
+            <div class="accordion-body">
+              <div class="field">
+                <label for="sceneFogModeSelect">Modo</label>
+                <select id="sceneFogModeSelect">
+                  <option value="off">Desligado</option>
+                  <option value="radial">Radial por player</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="sceneFogOpacityInput">Escurecimento <span id="sceneFogOpacityValue">58</span>%</label>
+                <input type="range" id="sceneFogOpacityInput" min="20" max="85" step="1" value="58" />
+              </div>
+              <div class="field">
+                <label for="sceneFogRadiusDefaultInput">Raio padrão <span id="sceneFogRadiusDefaultValue">280</span> px</label>
+                <input type="range" id="sceneFogRadiusDefaultInput" min="60" max="2400" step="10" value="280" />
+              </div>
+              <div class="tiny">No modo jogador, mapa, personagens e itens só aparecem dentro do alcance de visão. Este controle ajusta o raio dos tokens de player da cena atual, e cada token ainda pode ser refinado no inspector.</div>
+            </div>
+          </details>
+
+          <details class="accordion">
+            <summary>Paredes e portas</summary>
+            <div class="accordion-body">
+              <div class="row">
+                <button class="btn" id="wallToolBtn">Desenhar parede</button>
+                <button class="btn" id="doorToolBtn">Desenhar porta</button>
+              </div>
+              <div class="section-actions">
+                <button class="btn" id="cancelBarrierDraftBtn">Cancelar traço</button>
+              </div>
+              <div class="tiny">Clique no mapa para marcar início e fim. Paredes e portas fechadas bloqueiam fog e movimento. Portas abertas deixam passar.</div>
+              <div class="barrier-list" id="barrierList"></div>
+            </div>
+          </details>
+
+          <details class="accordion">
+            <summary>Rascunho de nota</summary>
+            <div class="accordion-body">
+              <div class="field">
+                <textarea id="noteDraftInput" placeholder="Detalhe, pista ou lembrete..."></textarea>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <section class="panel" data-panel="session">
+          <details class="accordion" open>
+            <summary>Dados</summary>
+            <div class="accordion-body">
+              <div class="row-3">
+                <button class="btn" data-roll="d4">d4</button>
+                <button class="btn" data-roll="d6">d6</button>
+                <button class="btn" data-roll="d8">d8</button>
+                <button class="btn" data-roll="d10">d10</button>
+                <button class="btn" data-roll="d12">d12</button>
+                <button class="btn" data-roll="d20">d20</button>
+              </div>
+              <div class="dice-log" id="diceLog"></div>
+            </div>
+          </details>
+
+          <details class="accordion">
+            <summary>Iniciativa</summary>
+            <div class="accordion-body">
+              <div class="row">
+                <input type="text" id="initiativeNameInput" placeholder="Nome" />
+                <input type="number" id="initiativeValueInput" placeholder="Valor" />
+              </div>
+              <div class="session-actions">
+                <button class="btn primary" id="addInitiativeBtn">Adicionar</button>
+                <button class="btn" id="sortInitiativeBtn">Ordenar</button>
+              </div>
+              <div class="initiative-list" id="initiativeList"></div>
+            </div>
+          </details>
+        </section>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="main-shell">
+        <div class="stage-shell">
+          <div class="viewport" id="viewport" aria-label="Mesa virtual">
+            <div class="stage-content" id="stageContent">
+              <div class="map-layer" id="mapLayer"><img id="mapImage" alt="Mapa da cena" /></div>
+              <canvas class="grid-layer" id="gridCanvas" width="1920" height="1080"></canvas>
+              <canvas class="barrier-layer" id="barrierCanvas" width="1920" height="1080"></canvas>
+              <canvas class="fog-layer" id="fogCanvas" width="1920" height="1080"></canvas>
+              <div class="entity-layer" id="entityLayer"></div>
+            </div>
+          </div>
+
+          <div class="welcome" id="welcomeBox">
+            <h2>Mapa no centro. O resto só quando precisar.</h2>
+            <p>Envie um mapa, adicione assets e abra o painel apenas para a tarefa atual. Grid e snap começam desligados para a cena respirar.</p>
+            <div class="top-actions" style="justify-content:center;margin-top:18px">
+              <label class="btn primary" for="mapInput">Enviar mapa</label>
+              <label class="btn" for="assetInput">Enviar assets</label>
+            </div>
+          </div>
+
+          <div class="toolbar-float">
+            <div class="tool-stack">
+              <button class="tool-btn active" data-tool="select" title="Selecionar">↖</button>
+              <button class="tool-btn" data-tool="pan" title="Mover visão">✥</button>
+              <button class="tool-btn" data-tool="note" title="Nova nota">✎</button>
+            </div>
+          </div>
+
+          <div class="zoom-float">
+            <button class="icon-btn" id="zoomOutBtn" title="Diminuir zoom">－</button>
+            <button class="icon-btn" id="zoomResetBtn" title="100%">100</button>
+            <button class="icon-btn" id="zoomInBtn" title="Aumentar zoom">＋</button>
+          </div>
+
+          <div class="status-float">
+            <div class="pill" id="statusPill">
+              <span id="statusText">Ferramenta: Seleção</span>
+              <span id="coordsText">x: 0 • y: 0</span>
+              <span id="sceneInfoText">Cena 1920 × 1080</span>
+              <span id="previewInfoText">Visão: GM</span>
+            </div>
+
+            <div class="inspector" id="inspector">
+              <div class="inspector-head">
+                <div>
+                  <h3 id="inspectorTitle">Sem seleção</h3>
+                  <div class="tiny" id="inspectorMeta">Selecione um token ou nota.</div>
+                </div>
+                <button class="btn danger" id="deleteSelectedBtn">Excluir</button>
+              </div>
+
+              <div id="tokenInspector" class="hidden">
+                <div class="field">
+                  <label for="selectedTokenNameInput">Nome</label>
+                  <input type="text" id="selectedTokenNameInput" />
+                </div>
+                <div class="row">
+                  <div class="field">
+                    <label for="selectedTokenSizeInput">Tamanho</label>
+                    <input type="number" id="selectedTokenSizeInput" min="16" step="4" />
+                  </div>
+                  <div class="field">
+                    <label for="selectedTokenRotationInput">Rotação</label>
+                    <input type="number" id="selectedTokenRotationInput" step="1" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="field">
+                    <label for="selectedTokenOwnerSelect">Controlado por</label>
+                    <select id="selectedTokenOwnerSelect"></select>
+                  </div>
+                  <div class="field">
+                    <label for="selectedTokenHiddenCheck">Visibilidade</label>
+                    <select id="selectedTokenHiddenCheck">
+                      <option value="visible">Visível</option>
+                      <option value="hidden">Oculto</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="field">
+                    <label for="selectedTokenVisionEnabled">Visão radial</label>
+                    <select id="selectedTokenVisionEnabled">
+                      <option value="on">Ativa</option>
+                      <option value="off">Desligada</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="selectedTokenVisionRadiusInput">Raio</label>
+                    <input type="number" id="selectedTokenVisionRadiusInput" min="60" max="2400" step="10" />
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="selectedTokenVisionSoftnessInput">Suavidade da borda</label>
+                  <input type="number" id="selectedTokenVisionSoftnessInput" min="0" max="800" step="10" />
+                </div>
+                <div class="row">
+                  <div class="field">
+                    <label for="selectedTokenHitboxMode">Hitbox</label>
+                    <select id="selectedTokenHitboxMode">
+                      <option value="box">Caixa</option>
+                      <option value="contour">Contorno PNG</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="tiny" id="selectedTokenContourHint">Tokens com transparência podem usar o contorno do PNG como área clicável. A seleção acompanha a silhueta visual do PNG.</div>
+                <div class="seg">
+                  <button class="btn" id="snapSelectedBtn">Alinhar grid</button>
+                  <button class="btn" id="duplicateSelectedBtn">Duplicar</button>
+                </div>
+              </div>
+
+              <div id="barrierInspector" class="hidden">
+                <div class="row">
+                  <div class="field">
+                    <label for="selectedBarrierTypeSelect">Tipo</label>
+                    <select id="selectedBarrierTypeSelect">
+                      <option value="wall">Parede</option>
+                      <option value="door">Porta</option>
+                    </select>
+                  </div>
+                  <div class="field" id="selectedDoorStateField">
+                    <label for="selectedDoorStateSelect">Estado</label>
+                    <select id="selectedDoorStateSelect">
+                      <option value="closed">Fechada</option>
+                      <option value="open">Aberta</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="tiny" id="selectedBarrierHint">Paredes e portas fechadas bloqueiam visão e passagem. Portas abertas deixam o fog e os tokens atravessarem.</div>
+              </div>
+
+              <div id="noteInspector" class="hidden">
+                <div class="field">
+                  <label for="selectedNoteTextInput">Texto da nota</label>
+                  <textarea id="selectedNoteTextInput"></textarea>
+                </div>
+                <div class="field">
+                  <label for="selectedNoteVisibilitySelect">Visibilidade</label>
+                  <select id="selectedNoteVisibilitySelect">
+                    <option value="gm">Só GM</option>
+                    <option value="all">Todos</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <input type="file" id="mapInput" accept="image/*" />
+  <input type="file" id="assetInput" accept="image/*" multiple />
+  <input type="file" id="importInput" accept="application/json,.json" />
+
+  <script type="module">
+    import {
+      firebaseEnabled,
+      auth,
+      db,
+      storage,
+      ensureSignedIn,
+      doc,
+      getDoc,
+      setDoc,
+      serverTimestamp,
+      onSnapshot,
+      storageRef,
+      uploadBytes,
+      getDownloadURL
+    } from './firebase-config.js';
+
+    const STORAGE_KEY = 'atelier-table-v16-door-solid-fix';
+
+    const defaultLayers = () => ({
+      visibility:{ map:true, grid:false, barriers:true, fog:true, tokens:true, notes:true },
+      locked:{ map:true, grid:true, barriers:false, fog:false, tokens:false, notes:false }
+    });
+
+    const createScene = (name = 'Cena 1') => ({
+      id: uid(),
+      name,
+      width: 1920,
+      height: 1080,
+      mapSrc: '',
+      gridSize: 64,
+      snapEnabled: false,
+      zoom: 1,
+      viewX: 0,
+      viewY: 0,
+      fogMode: 'radial',
+      fogOpacity: 58,
+      fogRadiusDefault: 280,
+      _barrierVersion: 1,
+      tokens: [],
+      notes: [],
+      barriers: [],
+      layers: defaultLayers()
+    });
+
+    const state = {
+      campaign: {
+        name: 'Nova campanha',
+        sessionName: 'Sessão 1',
+        currentSceneId: '',
+        scenes: [],
+        assets: [],
+        players: [],
+        initiative: [],
+        diceLog: []
+      },
+      ui: {
+        sidebarOpen: false,
+        activeTab: 'campaign',
+        selected: null,
+        tool: 'select',
+        previewMode: 'gm',
+        noteDraft: '',
+      }
+    };
+
+    const els = {
+      app: document.getElementById('app'),
+      brandMeta: document.getElementById('brandMeta'),
+      toggleSidebarBtn: document.getElementById('toggleSidebarBtn'),
+      campaignNameInput: document.getElementById('campaignNameInput'),
+      sessionNameInput: document.getElementById('sessionNameInput'),
+      sceneList: document.getElementById('sceneList'),
+      addSceneBtn: document.getElementById('addSceneBtn'),
+      duplicateSceneBtn: document.getElementById('duplicateSceneBtn'),
+      sceneNameInput: document.getElementById('sceneNameInput'),
+      gridSizeInput: document.getElementById('gridSizeInput'),
+      gridSizeValue: document.getElementById('gridSizeValue'),
+      sceneWidthInput: document.getElementById('sceneWidthInput'),
+      sceneHeightInput: document.getElementById('sceneHeightInput'),
+      applySceneSizeBtn: document.getElementById('applySceneSizeBtn'),
+      mapInput: document.getElementById('mapInput'),
+      assetInput: document.getElementById('assetInput'),
+      importInput: document.getElementById('importInput'),
+      assetGrid: document.getElementById('assetGrid'),
+      assetEmpty: document.getElementById('assetEmpty'),
+      objectList: document.getElementById('objectList'),
+      layerList: document.getElementById('layerList'),
+      playerList: document.getElementById('playerList'),
+      playerNameInput: document.getElementById('playerNameInput'),
+      playerRoleInput: document.getElementById('playerRoleInput'),
+      playerColorInput: document.getElementById('playerColorInput'),
+      addPlayerBtn: document.getElementById('addPlayerBtn'),
+      quickTokenName: document.getElementById('quickTokenName'),
+      createQuickTokenBtn: document.getElementById('createQuickTokenBtn'),
+      noteDraftInput: document.getElementById('noteDraftInput'),
+      wallToolBtn: document.getElementById('wallToolBtn'),
+      doorToolBtn: document.getElementById('doorToolBtn'),
+      cancelBarrierDraftBtn: document.getElementById('cancelBarrierDraftBtn'),
+      barrierList: document.getElementById('barrierList'),
+      sceneFogModeSelect: document.getElementById('sceneFogModeSelect'),
+      sceneFogOpacityInput: document.getElementById('sceneFogOpacityInput'),
+      sceneFogOpacityValue: document.getElementById('sceneFogOpacityValue'),
+      sceneFogRadiusDefaultInput: document.getElementById('sceneFogRadiusDefaultInput'),
+      sceneFogRadiusDefaultValue: document.getElementById('sceneFogRadiusDefaultValue'),
+      saveBtn: document.getElementById('saveBtn'),
+      loadBtn: document.getElementById('loadBtn'),
+      exportBtn: document.getElementById('exportBtn'),
+      fitBtn: document.getElementById('fitBtn'),
+      gridToggleBtn: document.getElementById('gridToggleBtn'),
+      snapToggleBtn: document.getElementById('snapToggleBtn'),
+      previewModeBtn: document.getElementById('previewModeBtn'),
+      viewport: document.getElementById('viewport'),
+      stageContent: document.getElementById('stageContent'),
+      mapLayer: document.getElementById('mapLayer'),
+      mapImage: document.getElementById('mapImage'),
+      gridCanvas: document.getElementById('gridCanvas'),
+      barrierCanvas: document.getElementById('barrierCanvas'),
+      fogCanvas: document.getElementById('fogCanvas'),
+      entityLayer: document.getElementById('entityLayer'),
+      welcomeBox: document.getElementById('welcomeBox'),
+      statusText: document.getElementById('statusText'),
+      coordsText: document.getElementById('coordsText'),
+      sceneInfoText: document.getElementById('sceneInfoText'),
+      previewInfoText: document.getElementById('previewInfoText'),
+      inspector: document.getElementById('inspector'),
+      inspectorTitle: document.getElementById('inspectorTitle'),
+      inspectorMeta: document.getElementById('inspectorMeta'),
+      deleteSelectedBtn: document.getElementById('deleteSelectedBtn'),
+      tokenInspector: document.getElementById('tokenInspector'),
+      barrierInspector: document.getElementById('barrierInspector'),
+      noteInspector: document.getElementById('noteInspector'),
+      selectedTokenNameInput: document.getElementById('selectedTokenNameInput'),
+      selectedTokenSizeInput: document.getElementById('selectedTokenSizeInput'),
+      selectedTokenRotationInput: document.getElementById('selectedTokenRotationInput'),
+      selectedTokenOwnerSelect: document.getElementById('selectedTokenOwnerSelect'),
+      selectedTokenHiddenCheck: document.getElementById('selectedTokenHiddenCheck'),
+      selectedTokenVisionEnabled: document.getElementById('selectedTokenVisionEnabled'),
+      selectedTokenVisionRadiusInput: document.getElementById('selectedTokenVisionRadiusInput'),
+      selectedTokenVisionSoftnessInput: document.getElementById('selectedTokenVisionSoftnessInput'),
+      selectedTokenHitboxMode: document.getElementById('selectedTokenHitboxMode'),
+      selectedTokenContourHint: document.getElementById('selectedTokenContourHint'),
+      snapSelectedBtn: document.getElementById('snapSelectedBtn'),
+      duplicateSelectedBtn: document.getElementById('duplicateSelectedBtn'),
+      selectedBarrierTypeSelect: document.getElementById('selectedBarrierTypeSelect'),
+      selectedDoorStateField: document.getElementById('selectedDoorStateField'),
+      selectedDoorStateSelect: document.getElementById('selectedDoorStateSelect'),
+      selectedBarrierHint: document.getElementById('selectedBarrierHint'),
+      selectedNoteTextInput: document.getElementById('selectedNoteTextInput'),
+      selectedNoteVisibilitySelect: document.getElementById('selectedNoteVisibilitySelect'),
+      diceLog: document.getElementById('diceLog'),
+      initiativeList: document.getElementById('initiativeList'),
+      initiativeNameInput: document.getElementById('initiativeNameInput'),
+      initiativeValueInput: document.getElementById('initiativeValueInput'),
+      addInitiativeBtn: document.getElementById('addInitiativeBtn'),
+      sortInitiativeBtn: document.getElementById('sortInitiativeBtn'),
+      zoomOutBtn: document.getElementById('zoomOutBtn'),
+      zoomInBtn: document.getElementById('zoomInBtn'),
+      zoomResetBtn: document.getElementById('zoomResetBtn'),
+      tabs: [...document.querySelectorAll('.tab-btn[data-tab]')],
+      panels: [...document.querySelectorAll('.panel')],
+      toolButtons: [...document.querySelectorAll('.tool-btn[data-tool]')],
+      rollButtons: [...document.querySelectorAll('[data-roll]')],
+    };
+
+    const gridCtx = els.gridCanvas.getContext('2d');
+    const barrierCtx = els.barrierCanvas.getContext('2d');
+    const fogCtx = els.fogCanvas.getContext('2d');
+    const runtime = {
+      entityNodes: new Map(),
+      coordFrame: 0,
+      pendingCoordClient: null,
+      visionSources: [],
+      visionPolygons: [],
+      visionClipPath: 'none',
+      barrierDraft: null,
+      barrierPreview: null,
+      blockingBarrierCache: new Map(),
+      tokenLocalPointCache: new WeakMap(),
+      tokenCollisionLocalCache: new WeakMap(),
+      gridCacheKey: '',
+      scheduledVisionFrame: 0,
+      pendingVisionEntities: false,
+    };
+
+    const session = {
+      roomId: '',
+      role: 'guest',
+      gmUid: '',
+      userId: '',
+      userName: '',
+      unsubRoom: null,
+      applyingRemote: false,
+      saveTimer: 0,
+      lastSharedState: '',
+    };
+
+    function isPlayerRole(){ return session.role === 'player'; }
+
+    function randomColorFromId(id=''){
+      let hash = 0;
+      for(const ch of String(id)) hash = ((hash << 5) - hash) + ch.charCodeAt(0);
+      const hue = Math.abs(hash) % 360;
+      return `hsl(${hue} 82% 62%)`;
+    }
+
+    function serializeSharedState(){
+      return JSON.stringify({ campaign: state.campaign });
+    }
+
+    function setRoomFeedback(message, kind=''){
+      if(!els.roomFeedback) return;
+      els.roomFeedback.textContent = message || '';
+      els.roomFeedback.className = `room-feedback${kind ? ' ' + kind : ''}`;
+    }
+
+    function updateFirebaseBadge(){
+      if(!els.firebaseStatusPill) return;
+      if(firebaseEnabled){
+        els.firebaseStatusPill.textContent = 'Firebase pronto';
+        els.firebaseStatusPill.style.color = '#bbf7d0';
+        els.firebaseStatusPill.style.borderColor = 'rgba(52,211,153,.25)';
+      } else {
+        els.firebaseStatusPill.textContent = 'Firebase pendente';
+        els.firebaseStatusPill.style.color = '';
+        els.firebaseStatusPill.style.borderColor = '';
+      }
+    }
+
+    function applySessionRoleDefaults(){
+      document.body.classList.toggle('room-ready', !!session.roomId);
+      document.body.classList.toggle('role-player', isPlayerRole());
+      state.ui.previewMode = isPlayerRole() ? 'player' : 'gm';
+      if(isPlayerRole()){
+        state.ui.activeTab = 'session';
+        if(!['select','pan'].includes(state.ui.tool)) state.ui.tool = 'select';
+      }
+      applyAppClass();
+      renderTabs();
+      renderRoomMeta();
+    }
+
+    function renderRoomMeta(){
+      const scene = activeScene();
+      const base = `${scene.name} • ${state.campaign.scenes.length} cena(s)`;
+      const roomPart = session.roomId ? ` • Sala ${session.roomId} • ${session.role === 'gm' ? 'Mestre' : session.userName || 'Jogador'}` : '';
+      els.brandMeta.textContent = base + roomPart;
+      document.title = session.roomId
+        ? `${state.campaign.name || 'Atelier Table'} • ${session.roomId}`
+        : 'Atelier Table Online • GitHub Pages + Firebase';
+    }
+
+    function ensureParticipant(userId, name, role='player'){
+      let changed = false;
+      let player = state.campaign.players.find(item => item.id === userId);
+      if(!player){
+        player = {
+          id: userId,
+          name: name || (role === 'gm' ? 'Mestre' : 'Jogador'),
+          role,
+          color: randomColorFromId(userId),
+          connected: true,
+        };
+        state.campaign.players.push(player);
+        changed = true;
+      } else {
+        if(name && player.name !== name){ player.name = name; changed = true; }
+        if(role && player.role !== role){ player.role = role; changed = true; }
+        if(player.connected !== true){ player.connected = true; changed = true; }
+        if(!player.color){ player.color = randomColorFromId(userId); changed = true; }
+      }
+      return changed;
+    }
+
+    function normalizeRoomCode(raw=''){
+      return String(raw || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+    }
+
+    function makeRoomCode(){
+      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let result = '';
+      for(let i = 0; i < 6; i++) result += alphabet[Math.floor(Math.random() * alphabet.length)];
+      return result;
+    }
+
+    async function uploadFileToRoom(file, folder='assets'){
+      if(!firebaseEnabled || !storage || !session.roomId) return await fileToDataUrl(file);
+      const safe = String(file.name || 'arquivo').replace(/[^a-zA-Z0-9._-]+/g, '-');
+      const key = `${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safe}`;
+      const ref = storageRef(storage, `rooms/${session.roomId}/${folder}/${key}`);
+      await uploadBytes(ref, file);
+      return await getDownloadURL(ref);
+    }
+
+    function scheduleRoomSave(force=false){
+      if(!firebaseEnabled || !db || !session.roomId || session.applyingRemote) return;
+      clearTimeout(session.saveTimer);
+      session.saveTimer = window.setTimeout(() => { void saveRoomState(force); }, force ? 0 : 320);
+    }
+
+    async function saveRoomState(force=false){
+      if(!firebaseEnabled || !db || !session.roomId || session.applyingRemote) return;
+      const shared = serializeSharedState();
+      if(!force && shared === session.lastSharedState) return;
+      const roomRef = doc(db, 'rooms', session.roomId);
+      const payload = JSON.parse(shared);
+      await setDoc(roomRef, {
+        name: state.campaign.name || 'Atelier Table',
+        roomId: session.roomId,
+        gmUid: session.gmUid || session.userId,
+        updatedBy: session.userId,
+        updatedAt: serverTimestamp(),
+        campaign: payload.campaign,
+      }, { merge: true });
+      session.lastSharedState = shared;
+      renderRoomMeta();
+    }
+
+    function closeRoomOverlay(){
+      els.roomOverlay.style.display = 'none';
+      applySessionRoleDefaults();
+      renderAll();
+      requestAnimationFrame(fitScene);
+    }
+
+    async function attachRoomListener(){
+      if(!firebaseEnabled || !db || !session.roomId) return;
+      if(session.unsubRoom) session.unsubRoom();
+      const roomRef = doc(db, 'rooms', session.roomId);
+      session.unsubRoom = onSnapshot(roomRef, snap => {
+        const data = snap.data();
+        if(!snap.exists() || !data?.campaign) return;
+        const remoteShared = JSON.stringify({ campaign: data.campaign });
+        if(remoteShared === session.lastSharedState) return;
+
+        session.applyingRemote = true;
+        const localUi = {
+          ...state.ui,
+          selected: null,
+          previewMode: isPlayerRole() ? 'player' : 'gm',
+          activeTab: isPlayerRole() ? 'session' : state.ui.activeTab,
+          tool: isPlayerRole() && !['select','pan'].includes(state.ui.tool) ? 'select' : state.ui.tool,
+        };
+        loadFromData({ campaign: data.campaign, ui: localUi });
+        ensureParticipant(session.userId, session.userName, isPlayerRole() ? 'player' : 'gm');
+        session.applyingRemote = false;
+        session.lastSharedState = JSON.stringify({ campaign: state.campaign });
+        applySessionRoleDefaults();
+        renderAll();
+      });
+    }
+
+    async function createRoomOnline(){
+      const masterName = (els.createNameInput.value || '').trim();
+      const roomName = (els.createRoomNameInput.value || '').trim() || 'Nova campanha';
+      if(!masterName){ setRoomFeedback('Escreva seu nome antes de criar a sala.', 'error'); return; }
+      if(!firebaseEnabled){ setRoomFeedback('Preencha o firebase-config.js primeiro.', 'error'); return; }
+
+      try{
+        setRoomFeedback('Criando sala...', '');
+        await ensureSignedIn();
+        seed();
+        state.campaign.name = roomName;
+        state.campaign.sessionName = 'Sessão 1';
+        session.userId = auth.currentUser.uid;
+        session.userName = masterName;
+        session.role = 'gm';
+        session.gmUid = session.userId;
+
+        let tries = 0;
+        while(true){
+          tries++;
+          const nextCode = makeRoomCode();
+          const exists = await getDoc(doc(db, 'rooms', nextCode));
+          if(!exists.exists() || tries > 8){
+            session.roomId = nextCode;
+            break;
+          }
+        }
+
+        state.campaign.players = [];
+        ensureParticipant(session.userId, masterName, 'gm');
+        applySessionRoleDefaults();
+        await saveRoomState(true);
+        await attachRoomListener();
+        const url = new URL(window.location.href);
+        url.searchParams.set('room', session.roomId);
+        window.history.replaceState({}, '', url.toString());
+        localStorage.setItem('atelier-table-profile-name', masterName);
+        setRoomFeedback(`Sala ${session.roomId} criada. Envie esse código para os players.`, 'ok');
+        closeRoomOverlay();
+      } catch(err){
+        console.error(err);
+        setRoomFeedback('Falha ao criar a sala. Veja se o Firebase está configurado direito.', 'error');
+      }
+    }
+
+    async function joinRoomOnline(){
+      const playerName = (els.joinNameInput.value || '').trim();
+      const roomCode = normalizeRoomCode(els.joinRoomCodeInput.value);
+      if(!playerName){ setRoomFeedback('Escreva seu nome antes de entrar.', 'error'); return; }
+      if(!roomCode){ setRoomFeedback('Digite o código da sala.', 'error'); return; }
+      if(!firebaseEnabled){ setRoomFeedback('Preencha o firebase-config.js primeiro.', 'error'); return; }
+
+      try{
+        setRoomFeedback('Entrando na sala...', '');
+        await ensureSignedIn();
+        const roomRef = doc(db, 'rooms', roomCode);
+        const snap = await getDoc(roomRef);
+        if(!snap.exists()){ setRoomFeedback('Sala não encontrada. Revise o código.', 'error'); return; }
+
+        const data = snap.data() || {};
+        session.userId = auth.currentUser.uid;
+        session.userName = playerName;
+        session.roomId = roomCode;
+        session.gmUid = data.gmUid || '';
+        session.role = session.userId === session.gmUid ? 'gm' : 'player';
+
+        session.applyingRemote = true;
+        loadFromData({ campaign: data.campaign || state.campaign, ui: { ...state.ui, selected: null } });
+        ensureParticipant(session.userId, playerName, isPlayerRole() ? 'player' : 'gm');
+        session.applyingRemote = false;
+        session.lastSharedState = JSON.stringify({ campaign: state.campaign });
+
+        await saveRoomState(true);
+        await attachRoomListener();
+        const url = new URL(window.location.href);
+        url.searchParams.set('room', session.roomId);
+        window.history.replaceState({}, '', url.toString());
+        localStorage.setItem('atelier-table-profile-name', playerName);
+        setRoomFeedback(`Conectado à sala ${roomCode}.`, 'ok');
+        closeRoomOverlay();
+      } catch(err){
+        console.error(err);
+        setRoomFeedback('Falha ao entrar na sala. Confira o Firebase e tente de novo.', 'error');
+      }
+    }
+
+    function preloadLobby(){
+      updateFirebaseBadge();
+      const savedName = localStorage.getItem('atelier-table-profile-name') || '';
+      if(savedName){
+        els.createNameInput.value = savedName;
+        els.joinNameInput.value = savedName;
+      }
+      const roomFromUrl = normalizeRoomCode(new URLSearchParams(window.location.search).get('room') || '');
+      if(roomFromUrl) els.joinRoomCodeInput.value = roomFromUrl;
+      els.roomHint.textContent = firebaseEnabled
+        ? 'Firebase detectado. Crie a sala como mestre ou entre com o código do mestre.'
+        : 'Abra firebase-config.js, cole a configuração do seu projeto Firebase e publique no GitHub Pages. Sem isso o site abre, mas a mesa não sincroniza.';
+    }
+
+    function uid(){ return Math.random().toString(36).slice(2,10); }
+    function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+    function escapeHtml(s=''){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    function escapeAttr(s=''){ return escapeHtml(s); }
+    function nowTime(){ return new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); }
+    function activeScene(){ return state.campaign.scenes.find(s => s.id === state.campaign.currentSceneId) || state.campaign.scenes[0]; }
+    function setActiveScene(id){
+      state.campaign.currentSceneId = id;
+      state.ui.selected = null;
+      loadSceneIntoCanvas();
+      renderAll();
+      const scene = activeScene();
+      if(scene && scene.viewX === 0 && scene.viewY === 0 && scene.zoom === 1){
+        requestAnimationFrame(fitScene);
+      }
+    }
+    function snap(v){ const scene = activeScene(); if(!scene.snapEnabled) return v; return Math.round(v / scene.gridSize) * scene.gridSize; }
+    function selectedToken(){ const scene = activeScene(); return state.ui.selected?.type === 'token' ? scene.tokens.find(t => t.id === state.ui.selected.id) : null; }
+    function selectedBarrier(){ const scene = activeScene(); return state.ui.selected?.type === 'barrier' ? (scene.barriers || []).find(b => b.id === state.ui.selected.id) : null; }
+    function selectedNote(){ const scene = activeScene(); return state.ui.selected?.type === 'note' ? scene.notes.find(n => n.id === state.ui.selected.id) : null; }
+    function layerVisible(name){ return !!activeScene().layers.visibility[name]; }
+    function layerLocked(name){ return !!activeScene().layers.locked[name]; }
+
+    function invalidateSceneCaches(scene = activeScene()){
+      if(!scene) return;
+      scene._barrierVersion = (scene._barrierVersion || 0) + 1;
+      runtime.blockingBarrierCache.delete(scene.id);
+      runtime.gridCacheKey = '';
+    }
+
+    function scheduleVisionRefresh(includeEntities = false){
+      if(includeEntities) runtime.pendingVisionEntities = true;
+      if(runtime.scheduledVisionFrame) return;
+      runtime.scheduledVisionFrame = requestAnimationFrame(() => {
+        runtime.scheduledVisionFrame = 0;
+        const redrawEntities = runtime.pendingVisionEntities;
+        runtime.pendingVisionEntities = false;
+        renderFogOverlay();
+        if(redrawEntities) renderEntities();
+      });
+    }
+
+    function seed(){
+      const scene = createScene('Cena 1');
+      scene._barrierVersion = 1;
+      state.campaign.scenes = [scene];
+      state.campaign.currentSceneId = scene.id;
+      state.ui.noteDraft = 'Pista, evento ou detalhe secreto.';
+    }
+
+    function applyAppClass(){
+      els.app.classList.toggle('sidebar-collapsed', !state.ui.sidebarOpen);
+    }
+
+    function renderAll(){
+      applyAppClass();
+      renderTop();
+      renderTabs();
+      renderScenes();
+      renderSceneFields();
+      renderAssets();
+      renderPlayers();
+      renderLayers();
+      renderBarrierList();
+      renderObjects();
+      renderGrid();
+      renderBarriers();
+      renderFogOverlay();
+      renderEntities();
+      applyLayerVisibility();
+      renderInspector();
+      renderDiceLog();
+      renderInitiative();
+      updateView();
+      updateStatus();
+      updateWelcome();
+    }
+
+    function renderTop(){
+      els.campaignNameInput.value = state.campaign.name;
+      els.sessionNameInput.value = state.campaign.sessionName;
+      const scene = activeScene();
+      els.previewModeBtn.textContent = state.ui.previewMode === 'gm' ? 'GM' : 'Jogador';
+      els.gridToggleBtn.textContent = scene.layers.visibility.grid ? 'Grid on' : 'Grid off';
+      if(els.snapToggleBtn) els.snapToggleBtn.textContent = scene.snapEnabled ? 'Snap on' : 'Snap off';
+      els.brandMeta.textContent = `${scene.name} • ${state.campaign.scenes.length} cena(s)`;
+    }
+
+    function renderTabs(){
+      els.tabs.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === state.ui.activeTab));
+      els.panels.forEach(panel => panel.classList.toggle('active', panel.dataset.panel === state.ui.activeTab));
+    }
+
+    function renderScenes(){
+      els.sceneList.innerHTML = '';
+      state.campaign.scenes.forEach(scene => {
+        const card = document.createElement('div');
+        card.className = `scene-card${scene.id === state.campaign.currentSceneId ? ' active' : ''}`;
+        card.innerHTML = `
+          <div class="scene-top">
+            <div>
+              <div class="scene-title">${escapeHtml(scene.name)}</div>
+              <div class="tiny">${scene.width} × ${scene.height} • ${scene.tokens.length} tokens • ${scene.notes.length} notas • ${(scene.barriers || []).length} bloqueios</div>
+            </div>
+            <button class="chip small ${scene.id === state.campaign.currentSceneId ? 'active' : ''}">${scene.id === state.campaign.currentSceneId ? 'Atual' : 'Abrir'}</button>
+          </div>
+          <div class="scene-actions">
+            <button class="list-btn" data-action="switch">Abrir</button>
+            <button class="list-btn" data-action="duplicate">Duplicar</button>
+            <button class="list-btn" data-action="delete">Excluir</button>
+          </div>
+        `;
+        card.querySelector('.chip').addEventListener('click', () => setActiveScene(scene.id));
+        card.querySelector('[data-action="switch"]').addEventListener('click', () => setActiveScene(scene.id));
+        card.querySelector('[data-action="duplicate"]').addEventListener('click', () => duplicateScene(scene.id));
+        card.querySelector('[data-action="delete"]').addEventListener('click', () => removeScene(scene.id));
+        els.sceneList.appendChild(card);
+      });
+    }
+
+    function renderSceneFields(){
+      const scene = activeScene();
+      els.sceneNameInput.value = scene.name;
+      els.gridSizeInput.value = scene.gridSize;
+      els.gridSizeValue.textContent = scene.gridSize;
+      els.sceneWidthInput.value = scene.width;
+      els.sceneHeightInput.value = scene.height;
+      els.sceneFogModeSelect.value = scene.fogMode || 'radial';
+      els.sceneFogOpacityInput.value = scene.fogOpacity ?? 58;
+      els.sceneFogOpacityValue.textContent = scene.fogOpacity ?? 58;
+      els.sceneFogRadiusDefaultInput.value = scene.fogRadiusDefault ?? 280;
+      els.sceneFogRadiusDefaultValue.textContent = scene.fogRadiusDefault ?? 280;
+      els.noteDraftInput.value = state.ui.noteDraft;
+    }
+
+    function renderAssets(){
+      els.assetGrid.innerHTML = '';
+      els.assetEmpty.classList.toggle('hidden', state.campaign.assets.length !== 0);
+      state.campaign.assets.forEach(asset => {
+        const card = document.createElement('div');
+        card.className = 'asset-card';
+        const badge = asset.contourPolygon ? '<span class="tiny" style="display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:999px;background:var(--accent-soft);border:1px solid rgba(91,124,255,.14)">Contorno PNG</span>' : '';
+        card.innerHTML = `
+          <img src="${asset.src}" alt="${escapeAttr(asset.name)}">
+          <strong title="${escapeAttr(asset.name)}">${escapeHtml(asset.name)}</strong>
+          ${badge}
+          <button>Adicionar</button>
+        `;
+        card.querySelector('button').addEventListener('click', () => addTokenFromAsset(asset));
+        card.querySelector('img').addEventListener('dblclick', () => addTokenFromAsset(asset));
+        els.assetGrid.appendChild(card);
+      });
+    }
+
+    function renderPlayers(){
+      els.playerList.innerHTML = '';
+      if(!state.campaign.players.length){
+        els.playerList.innerHTML = '<div class="empty">Nenhum jogador cadastrado.</div>';
+        return;
+      }
+      state.campaign.players.forEach(player => {
+        const token = activeScene().tokens.find(t => t.controlledBy === player.id);
+        const card = document.createElement('div');
+        card.className = 'player-card';
+        card.innerHTML = `
+          <div class="player-top">
+            <div style="display:flex;align-items:center;gap:8px;min-width:0">
+              <span class="player-dot" style="background:${player.color}"></span>
+              <div>
+                <div class="player-name">${escapeHtml(player.name)}</div>
+                <div class="tiny">${escapeHtml(roleLabel(player.role))} • ${token ? 'Controla ' + escapeHtml(token.name) : 'Sem token na cena'}</div>
+              </div>
+            </div>
+            <span class="status-dot ${player.connected ? '' : 'off'}"></span>
+          </div>
+          <div class="player-actions">
+            <button class="list-btn" data-action="status">${player.connected ? 'Desconectar' : 'Conectar'}</button>
+            <button class="list-btn" data-action="remove">Remover</button>
+          </div>
+        `;
+        card.querySelector('[data-action="status"]').addEventListener('click', () => { player.connected = !player.connected; renderPlayers(); });
+        card.querySelector('[data-action="remove"]').addEventListener('click', () => {
+          state.campaign.players = state.campaign.players.filter(p => p.id !== player.id);
+          activeScene().tokens.forEach(t => { if(t.controlledBy === player.id) t.controlledBy = ''; });
+          renderAll();
+        });
+        els.playerList.appendChild(card);
+      });
+    }
+
+    function renderLayers(){
+      const scene = activeScene();
+      const defs = [
+        ['map', 'Mapa', 'Imagem base da cena'],
+        ['grid', 'Grid', 'Grade visual'],
+        ['barriers', 'Paredes', 'Paredes e portas de bloqueio'],
+        ['fog', 'Fog', 'Cobertura do mapa'],
+        ['tokens', 'Tokens', 'Personagens e marcadores'],
+        ['notes', 'Notas', 'Anotações posicionadas no mapa'],
+      ];
+      els.layerList.innerHTML = '';
+      defs.forEach(([key, title, meta]) => {
+        const row = document.createElement('div');
+        row.className = 'layer-row';
+        row.innerHTML = `
+          <div>
+            <div><strong>${title}</strong></div>
+            <div class="meta">${meta}</div>
+          </div>
+          <button class="chip small ${scene.layers.visibility[key] ? 'active' : ''}" data-action="visibility">${scene.layers.visibility[key] ? 'Visível' : 'Oculta'}</button>
+          <button class="chip small ${scene.layers.locked[key] ? '' : 'active'}" data-action="lock">${scene.layers.locked[key] ? 'Travada' : 'Editável'}</button>
+        `;
+        row.querySelector('[data-action="visibility"]').addEventListener('click', () => {
+          scene.layers.visibility[key] = !scene.layers.visibility[key];
+          renderAll();
+        });
+        row.querySelector('[data-action="lock"]').addEventListener('click', () => {
+          scene.layers.locked[key] = !scene.layers.locked[key];
+          renderLayers();
+          updateStatus();
+        });
+        els.layerList.appendChild(row);
+      });
+    }
+
+    function renderObjects(){
+      const scene = activeScene();
+      const objects = [
+        ...scene.tokens.map(t => ({ id:t.id, type:'token', name:t.name || 'Token', meta:`${Math.round(t.x)}, ${Math.round(t.y)}` })),
+        ...scene.notes.map(n => ({ id:n.id, type:'note', name:n.text || 'Nota', meta:`${n.gmOnly ? 'GM' : 'Pública'} • ${Math.round(n.x)}, ${Math.round(n.y)}` })),
+      ];
+      els.objectList.innerHTML = '';
+      if(!objects.length){
+        els.objectList.innerHTML = '<div class="empty">A cena ainda não tem objetos.</div>';
+        return;
+      }
+      objects.forEach(obj => {
+        const item = document.createElement('div');
+        const active = state.ui.selected?.type === obj.type && state.ui.selected?.id === obj.id;
+        item.className = 'object-item';
+        item.innerHTML = `
+          <div class="object-top">
+            <strong>${escapeHtml(truncate(obj.name, 28))}</strong>
+            <button class="chip small ${active ? 'active' : ''}">${active ? 'Selecionado' : 'Selecionar'}</button>
+          </div>
+          <div class="tiny">${escapeHtml(obj.type === 'token' ? 'Token' : 'Nota')} • ${escapeHtml(obj.meta)}</div>
+        `;
+        item.querySelector('button').addEventListener('click', () => {
+          setSelected(obj.type, obj.id);
+        });
+        els.objectList.appendChild(item);
+      });
+    }
+
+    function entityKey(type, id){ return `${type}:${id}`; }
+    function ownerNameForToken(token){
+      const owner = state.campaign.players.find(p => p.id === (token.controlledBy || ''));
+      return owner ? owner.name : '';
+    }
+
+    function createTokenNode(){
+      const node = document.createElement('div');
+      node.innerHTML = `
+        <div class="token-visual" aria-hidden="true">
+          <img class="token-media" alt="">
+        </div>
+        <div class="token-hit" data-body="token"></div>
+        <div class="rotate-line"></div>
+        <div class="rotate-handle" data-handle="rotate"></div>
+        <div class="token-handle br" data-handle="resize"></div>
+        <div class="token-label"></div>
+      `;
+      node._refs = {
+        media: node.querySelector('.token-media'),
+        hit: node.querySelector('.token-hit'),
+        label: node.querySelector('.token-label'),
+      };
+      bindTokenNode(node);
+      return node;
+    }
+
+    function updateTokenNode(node, token, isSelected){
+      const contourEnabled = token.hitboxMode === 'contour' && !!token.contourPolygon;
+      node.className = `entity token ${contourEnabled ? 'contour-shape' : 'box-shape'}${isSelected ? ' selected' : ''}${token.hidden ? ' hidden-token' : ''}`;
+      node.dataset.kind = 'token';
+      node.dataset.id = token.id;
+      node.style.left = `${token.x}px`;
+      node.style.top = `${token.y}px`;
+      node.style.width = `${token.size}px`;
+      node.style.height = `${token.size}px`;
+      node.style.transform = `rotate(${token.rotation || 0}deg)`;
+      const ownerName = ownerNameForToken(token);
+      if(node._refs.media.src !== token.src) node._refs.media.src = token.src;
+      if(node._refs.media.alt !== (token.name || 'Token')) node._refs.media.alt = token.name || 'Token';
+      node._refs.media.style.clipPath = 'none';
+      node._refs.media.style.webkitClipPath = 'none';
+      node._refs.media.style.mask = 'none';
+      node._refs.media.style.webkitMask = 'none';
+      const nextClip = contourEnabled ? `polygon(${token.contourPolygon})` : '';
+      if((node._refs.hit.style.clipPath || '') !== nextClip) node._refs.hit.style.clipPath = nextClip;
+      const nextLabel = `${token.name || 'Token'}${ownerName ? ' · ' + ownerName : ''}`;
+      if(node._refs.label.textContent !== nextLabel) node._refs.label.textContent = nextLabel;
+    }
+
+    function createNoteNode(){
+      const node = document.createElement('button');
+      bindNoteNode(node);
+      return node;
+    }
+
+    function updateNoteNode(node, note, isSelected){
+      node.className = `entity note${note.gmOnly ? ' gm-only' : ''}${isSelected ? ' selected' : ''}`;
+      node.style.left = `${note.x - 14}px`;
+      node.style.top = `${note.y - 14}px`;
+      node.dataset.kind = 'note';
+      node.dataset.id = note.id;
+      node.title = note.text || 'Nota';
+      node.textContent = '✦';
+    }
+
+    function bindNoteNode(node){
+      node.addEventListener('pointerdown', (e) => {
+        if(isPlayerRole()) return;
+        if(state.ui.tool !== 'select' || layerLocked('notes')) return;
+        const note = activeScene().notes.find(n => n.id === node.dataset.id);
+        if(!note) return;
+        e.stopPropagation();
+        setSelected('note', note.id);
+        startNoteDrag(e, note);
+      });
+      node.addEventListener('dblclick', () => {
+        if(isPlayerRole()) return;
+        const note = activeScene().notes.find(n => n.id === node.dataset.id);
+        if(!note) return;
+        setSelected('note', note.id);
+        els.selectedNoteTextInput.focus();
+      });
+    }
+
+    function updateTokenNodeGeometry(token){
+      const node = runtime.entityNodes.get(entityKey('token', token.id));
+      if(!node) return;
+      node.style.left = `${token.x}px`;
+      node.style.top = `${token.y}px`;
+      node.style.width = `${token.size}px`;
+      node.style.height = `${token.size}px`;
+      node.style.transform = `rotate(${token.rotation || 0}deg)`;
+    }
+
+    function updateNoteNodeGeometry(note){
+      const node = runtime.entityNodes.get(entityKey('note', note.id));
+      if(!node) return;
+      node.style.left = `${note.x - 14}px`;
+      node.style.top = `${note.y - 14}px`;
+    }
+
+    function refreshVisionIfNeeded(token){
+      if(!token) return;
+      if(state.ui.previewMode !== 'player') return;
+      if(!token.controlledBy || token.visionEnabled === false) return;
+      scheduleVisionRefresh(true);
+    }
+
+    function refreshSelectedTokenNode(){
+      const token = selectedToken();
+      if(!token) return;
+      const node = runtime.entityNodes.get(entityKey('token', token.id));
+      if(node) updateTokenNode(node, token, true);
+    }
+
+    function refreshSelectedNoteNode(){
+      const note = selectedNote();
+      if(!note) return;
+      const node = runtime.entityNodes.get(entityKey('note', note.id));
+      if(node) updateNoteNode(node, note, true);
+    }
+
+    function refreshInspectorMetaOnly(){
+      const token = selectedToken();
+      const barrier = selectedBarrier();
+      const note = selectedNote();
+      if(token){
+        els.inspectorTitle.textContent = token.name || 'Token';
+        els.inspectorMeta.textContent = `Posição ${Math.round(token.x)}, ${Math.round(token.y)} • ${Math.round(token.size)} px`;
+      } else if(barrier){
+        els.inspectorTitle.textContent = barrier.type === 'door' ? 'Porta' : 'Parede';
+        els.inspectorMeta.textContent = `${barrierLength(barrier)} px • ${Math.round(barrier.x1)}, ${Math.round(barrier.y1)} → ${Math.round(barrier.x2)}, ${Math.round(barrier.y2)}`;
+      } else if(note){
+        els.inspectorTitle.textContent = 'Nota';
+        els.inspectorMeta.textContent = `${note.gmOnly ? 'Visível só para GM' : 'Nota pública'} • ${Math.round(note.x)}, ${Math.round(note.y)}`;
+      }
+    }
+
+    function queueCoordsUpdate(clientX, clientY){
+      runtime.pendingCoordClient = { clientX, clientY };
+      if(runtime.coordFrame) return;
+      runtime.coordFrame = requestAnimationFrame(() => {
+        runtime.coordFrame = 0;
+        if(!runtime.pendingCoordClient) return;
+        const { clientX, clientY } = runtime.pendingCoordClient;
+        runtime.pendingCoordClient = null;
+        const p = worldPoint(clientX, clientY);
+        els.coordsText.textContent = `x: ${Math.round(p.x)} • y: ${Math.round(p.y)}`;
+      });
+    }
+
+    function renderEntities(){
+      const scene = activeScene();
+      const fragment = document.createDocumentFragment();
+      const seen = new Set();
+
+      scene.tokens.forEach(token => {
+        if(!scene.layers.visibility.tokens) return;
+        if(state.ui.previewMode === 'player' && token.hidden) return;
+        if(!rectTouchesVisibleSources(token.x, token.y, token.size, token.size)) return;
+        const key = entityKey('token', token.id);
+        let node = runtime.entityNodes.get(key);
+        if(!node){
+          node = createTokenNode();
+          runtime.entityNodes.set(key, node);
+        }
+        updateTokenNode(node, token, state.ui.selected?.type === 'token' && state.ui.selected?.id === token.id);
+        seen.add(key);
+        fragment.appendChild(node);
+      });
+
+      scene.notes.forEach(note => {
+        if(!scene.layers.visibility.notes) return;
+        if(state.ui.previewMode === 'player' && note.gmOnly) return;
+        if(!rectTouchesVisibleSources(note.x - 14, note.y - 14, 28, 28)) return;
+        const key = entityKey('note', note.id);
+        let node = runtime.entityNodes.get(key);
+        if(!node){
+          node = createNoteNode();
+          runtime.entityNodes.set(key, node);
+        }
+        updateNoteNode(node, note, state.ui.selected?.type === 'note' && state.ui.selected?.id === note.id);
+        seen.add(key);
+        fragment.appendChild(node);
+      });
+
+      for(const [key, node] of [...runtime.entityNodes.entries()]){
+        if(seen.has(key)) continue;
+        node.remove();
+        runtime.entityNodes.delete(key);
+      }
+
+      els.entityLayer.replaceChildren(fragment);
+      applyEntityVisionMask();
+    }
+
+    function bindTokenNode(node){
+      node.addEventListener('pointerdown', (e) => {
+        if(state.ui.tool !== 'select' || layerLocked('tokens')) return;
+        const token = activeScene().tokens.find(t => t.id === node.dataset.id);
+        if(!token) return;
+        const handle = e.target.dataset.handle;
+        const bodyHit = e.target.closest('[data-body="token"]');
+        if(!handle && !bodyHit) return;
+        if(isPlayerRole()){
+          if(token.controlledBy !== session.userId) return;
+          if(handle) return;
+        }
+        e.stopPropagation();
+        setSelected('token', token.id);
+        if(handle === 'resize') startTokenResize(e, token);
+        else if(handle === 'rotate') startTokenRotate(e, token);
+        else if(bodyHit) startTokenDrag(e, token);
+      });
+    }
+
+    function renderInspector(){
+      const token = selectedToken();
+      const barrier = selectedBarrier();
+      const note = selectedNote();
+      const hasSelection = !!(token || barrier || note);
+      els.inspector.classList.toggle('visible', hasSelection);
+      els.tokenInspector.classList.add('hidden');
+      els.barrierInspector.classList.add('hidden');
+      els.noteInspector.classList.add('hidden');
+      if(token){
+        els.inspectorTitle.textContent = token.name || 'Token';
+        els.inspectorMeta.textContent = `Posição ${Math.round(token.x)}, ${Math.round(token.y)} • ${Math.round(token.size)} px`;
+        els.tokenInspector.classList.remove('hidden');
+        els.selectedTokenNameInput.value = token.name || '';
+        els.selectedTokenSizeInput.value = Math.round(token.size);
+        els.selectedTokenRotationInput.value = Math.round(token.rotation || 0);
+        renderTokenOwnerOptions(token.controlledBy || '');
+        els.selectedTokenHiddenCheck.value = token.hidden ? 'hidden' : 'visible';
+        els.selectedTokenVisionEnabled.value = token.visionEnabled !== false ? 'on' : 'off';
+        els.selectedTokenVisionRadiusInput.value = Math.round(token.visionRadius || 280);
+        els.selectedTokenVisionSoftnessInput.value = Math.round(token.visionSoftness || 0);
+        const hasContour = !!token.contourPolygon;
+        els.selectedTokenHitboxMode.value = hasContour ? (token.hitboxMode || 'box') : 'box';
+        [...els.selectedTokenHitboxMode.options].forEach(option => option.disabled = option.value === 'contour' && !hasContour);
+        els.selectedTokenContourHint.textContent = hasContour
+          ? 'Este token tem contorno PNG disponível para clique preciso. A seleção visual acompanha a silhueta da imagem e a colisão usa essa forma.'
+          : 'Este token não tem transparência útil para contorno. O clique e a colisão ficam em caixa normal, mas a imagem continua limpa, sem moldura.';
+      } else if(barrier){
+        els.inspectorTitle.textContent = barrier.type === 'door' ? 'Porta' : 'Parede';
+        els.inspectorMeta.textContent = `${barrierLength(barrier)} px • ${Math.round(barrier.x1)}, ${Math.round(barrier.y1)} → ${Math.round(barrier.x2)}, ${Math.round(barrier.y2)}`;
+        els.barrierInspector.classList.remove('hidden');
+        els.selectedBarrierTypeSelect.value = barrier.type || 'wall';
+        els.selectedDoorStateField.style.display = barrier.type === 'door' ? '' : 'none';
+        els.selectedDoorStateSelect.value = barrier.open ? 'open' : 'closed';
+        els.selectedBarrierHint.textContent = barrier.type === 'door'
+          ? (barrier.open ? 'Esta porta está aberta. Fog e tokens podem passar por ela.' : 'Esta porta está fechada. Fog e tokens param nela.')
+          : 'Esta parede bloqueia visão e movimento.';
+      } else if(note){
+        els.inspectorTitle.textContent = 'Nota';
+        els.inspectorMeta.textContent = `${note.gmOnly ? 'Visível só para GM' : 'Nota pública'} • ${Math.round(note.x)}, ${Math.round(note.y)}`;
+        els.noteInspector.classList.remove('hidden');
+        els.selectedNoteTextInput.value = note.text || '';
+        els.selectedNoteVisibilitySelect.value = note.gmOnly ? 'gm' : 'all';
+      }
+    }
+
+    function renderTokenOwnerOptions(selectedId=''){
+      els.selectedTokenOwnerSelect.innerHTML = '<option value="">Ninguém</option>';
+      state.campaign.players.forEach(player => {
+        const option = document.createElement('option');
+        option.value = player.id;
+        option.textContent = `${player.name} (${roleLabel(player.role)})`;
+        els.selectedTokenOwnerSelect.appendChild(option);
+      });
+      els.selectedTokenOwnerSelect.value = selectedId;
+    }
+
+    function renderDiceLog(){
+      els.diceLog.innerHTML = '';
+      if(!state.campaign.diceLog.length){
+        els.diceLog.innerHTML = '<div class="empty">Sem rolagens ainda.</div>';
+        return;
+      }
+      state.campaign.diceLog.slice().reverse().forEach(log => {
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.innerHTML = `<strong>${escapeHtml(log.label)} = ${log.result}</strong><div class="tiny">${escapeHtml(log.time)}</div>`;
+        els.diceLog.appendChild(item);
+      });
+    }
+
+    function renderInitiative(){
+      els.initiativeList.innerHTML = '';
+      if(!state.campaign.initiative.length){
+        els.initiativeList.innerHTML = '<div class="empty">Sem participantes ainda.</div>';
+        return;
+      }
+      state.campaign.initiative.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'initiative-item';
+        row.innerHTML = `
+          <div class="initiative-grid">
+            <strong>${escapeHtml(item.name)}</strong>
+            <button class="chip small">✕</button>
+          </div>
+          <div class="tiny">Iniciativa: ${Number(item.value) || 0}</div>
+        `;
+        row.querySelector('button').addEventListener('click', () => {
+          state.campaign.initiative = state.campaign.initiative.filter(i => i.id !== item.id);
+          renderInitiative();
+        });
+        els.initiativeList.appendChild(row);
+      });
+    }
+
+    function resizeScene(width, height){
+      const scene = activeScene();
+      scene.width = clamp(Number(width) || 1920, 320, 8192);
+      scene.height = clamp(Number(height) || 1080, 240, 8192);
+      invalidateSceneCaches(scene);
+      els.stageContent.style.width = `${scene.width}px`;
+      els.stageContent.style.height = `${scene.height}px`;
+      els.gridCanvas.width = scene.width;
+      els.gridCanvas.height = scene.height;
+      els.barrierCanvas.width = scene.width;
+      els.barrierCanvas.height = scene.height;
+      els.fogCanvas.width = scene.width;
+      els.fogCanvas.height = scene.height;
+      els.mapImage.style.width = `${scene.width}px`;
+      els.mapImage.style.height = `${scene.height}px`;
+      fogCtx.clearRect(0,0,scene.width,scene.height);
+      barrierCtx.clearRect(0,0,scene.width,scene.height);
+      renderBarriers();
+      renderFogOverlay();
+      if(state.ui.previewMode === 'player') renderEntities();
+    }
+
+    function renderGrid(){
+      const scene = activeScene();
+      const gridKey = `${scene.id}|${scene.width}|${scene.height}|${scene.gridSize}|${scene.layers.visibility.grid ? 1 : 0}`;
+      if(runtime.gridCacheKey === gridKey) return;
+      runtime.gridCacheKey = gridKey;
+      gridCtx.clearRect(0,0,scene.width,scene.height);
+      if(!scene.layers.visibility.grid) return;
+      gridCtx.strokeStyle = 'rgba(255,255,255,.08)';
+      gridCtx.lineWidth = 1;
+      for(let x = 0; x <= scene.width; x += scene.gridSize){
+        gridCtx.beginPath(); gridCtx.moveTo(x + .5, 0); gridCtx.lineTo(x + .5, scene.height); gridCtx.stroke();
+      }
+      for(let y = 0; y <= scene.height; y += scene.gridSize){
+        gridCtx.beginPath(); gridCtx.moveTo(0, y + .5); gridCtx.lineTo(scene.width, y + .5); gridCtx.stroke();
+      }
+    }
+
+    function applyLayerVisibility(){
+      const scene = activeScene();
+      els.mapLayer.style.display = scene.layers.visibility.map ? '' : 'none';
+      els.gridCanvas.style.display = scene.layers.visibility.grid ? '' : 'none';
+      els.barrierCanvas.style.display = (scene.layers.visibility.barriers && state.ui.previewMode === 'gm') ? '' : 'none';
+      els.fogCanvas.style.display = scene.layers.visibility.fog ? '' : 'none';
+    }
+
+    function updateView(){
+      const scene = activeScene();
+      els.stageContent.style.transform = `translate(${scene.viewX}px, ${scene.viewY}px) scale(${scene.zoom})`;
+      els.sceneInfoText.textContent = `${scene.name} • ${scene.width} × ${scene.height}`;
+      els.previewInfoText.textContent = `Visão: ${state.ui.previewMode === 'gm' ? 'GM' : 'Jogador'}`;
+      els.zoomResetBtn.textContent = `${Math.round(scene.zoom * 100)}`;
+    }
+
+    function fitScene(){
+      const scene = activeScene();
+      const rect = els.viewport.getBoundingClientRect();
+      const zoom = Math.min(rect.width / scene.width, rect.height / scene.height, 1);
+      scene.zoom = Number(zoom.toFixed(2));
+      scene.viewX = Math.round((rect.width - scene.width * zoom) / 2);
+      scene.viewY = Math.round((rect.height - scene.height * zoom) / 2);
+      updateView();
+    }
+
+    function adjustZoom(nextZoom, originX, originY){
+      const scene = activeScene();
+      const rect = els.viewport.getBoundingClientRect();
+      const ox = originX ?? rect.width / 2;
+      const oy = originY ?? rect.height / 2;
+      const worldX = (ox - scene.viewX) / scene.zoom;
+      const worldY = (oy - scene.viewY) / scene.zoom;
+      scene.zoom = clamp(nextZoom, .35, 2.6);
+      scene.viewX = ox - worldX * scene.zoom;
+      scene.viewY = oy - worldY * scene.zoom;
+      updateView();
+    }
+
+    function worldPoint(clientX, clientY){
+      const scene = activeScene();
+      const rect = els.viewport.getBoundingClientRect();
+      return {
+        x: clamp((clientX - rect.left - scene.viewX) / scene.zoom, 0, scene.width),
+        y: clamp((clientY - rect.top - scene.viewY) / scene.zoom, 0, scene.height)
+      };
+    }
+
+    function updateStatus(extra=''){
+      const toolNames = { select:'Seleção', pan:'Mover visão', note:'Nova nota', wall:'Parede', door:'Porta' };
+      els.statusText.textContent = `Ferramenta: ${toolNames[state.ui.tool] || state.ui.tool}`;
+      if(extra){ els.statusText.textContent += ` • ${extra}`; }
+    }
+
+    function updateWelcome(){
+      const scene = activeScene();
+      const hasContent = !!scene.mapSrc || !!scene.tokens.length || !!scene.notes.length || !!(scene.barriers || []).length || !!state.campaign.assets.length;
+      els.welcomeBox.classList.toggle('hidden', hasContent);
+    }
+
+    function parseContourPointsString(value=''){
+      return String(value || '')
+        .trim()
+        .split(/\s+/)
+        .map(pair => pair.split(',').map(Number))
+        .filter(parts => parts.length === 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1]))
+        .map(([x, y]) => ({ x: x / 100 - 0.5, y: y / 100 - 0.5 }));
+    }
+
+    function getTokenLocalPoints(token){
+      const cacheKey = `${token.hitboxMode || 'box'}|${token.contourPoints || ''}`;
+      const cached = runtime.tokenLocalPointCache.get(token);
+      if(cached?.key === cacheKey) return cached.points;
+      let points = null;
+      if(token.hitboxMode === 'contour' && token.contourPoints){
+        const parsed = parseContourPointsString(token.contourPoints);
+        if(parsed.length >= 3) points = parsed;
+      }
+      if(!points){
+        points = [
+          { x:-0.5, y:-0.5 },
+          { x:0.5, y:-0.5 },
+          { x:0.5, y:0.5 },
+          { x:-0.5, y:0.5 },
+        ];
+      }
+      runtime.tokenLocalPointCache.set(token, { key: cacheKey, points });
+      return points;
+    }
+
+    function getTokenWorldPolygon(token, x = token.x, y = token.y, size = token.size, rotation = token.rotation || 0){
+      const localPoints = getTokenLocalPoints(token);
+      const cx = x + size / 2;
+      const cy = y + size / 2;
+      const rad = rotation * Math.PI / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      return localPoints.map(point => {
+        const lx = point.x * size;
+        const ly = point.y * size;
+        return {
+          x: cx + lx * cos - ly * sin,
+          y: cy + lx * sin + ly * cos,
+        };
+      });
+    }
+
+    function transformLocalPoint(localPoint, x, y, size, rotation = 0){
+      const cx = x + size / 2;
+      const cy = y + size / 2;
+      const rad = rotation * Math.PI / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      const lx = localPoint.x * size;
+      const ly = localPoint.y * size;
+      return {
+        x: cx + lx * cos - ly * sin,
+        y: cy + lx * sin + ly * cos,
+      };
+    }
+
+    function getTokenCollisionLocalPoints(token){
+      const cacheKey = `${token.hitboxMode || 'box'}|${token.contourPoints || ''}`;
+      const cached = runtime.tokenCollisionLocalCache.get(token);
+      if(cached?.key === cacheKey) return cached.points;
+      const shape = getTokenLocalPoints(token);
+      if(!shape.length) return [{ x:0, y:0 }];
+      const points = [];
+      const stride = token.hitboxMode === 'contour' ? Math.max(1, Math.floor(shape.length / 18)) : 1;
+      for(let i = 0; i < shape.length; i += stride){
+        points.push(shape[i]);
+      }
+      for(let i = 0; i < shape.length; i += stride){
+        const a = shape[i];
+        const b = shape[(i + stride) % shape.length] || shape[0];
+        points.push({ x:(a.x + b.x) / 2, y:(a.y + b.y) / 2 });
+      }
+      points.push({ x:0, y:0 });
+      points.push({ x:0, y:-0.26 });
+      points.push({ x:0.26, y:0 });
+      points.push({ x:0, y:0.26 });
+      points.push({ x:-0.26, y:0 });
+      const deduped = [];
+      const seen = new Set();
+      points.forEach(point => {
+        const key = `${point.x.toFixed(3)},${point.y.toFixed(3)}`;
+        if(seen.has(key)) return;
+        seen.add(key);
+        deduped.push(point);
+      });
+      runtime.tokenCollisionLocalCache.set(token, { key: cacheKey, points: deduped });
+      return deduped;
+    }
+
+    function getTokenCollisionWorldPoints(token, x = token.x, y = token.y, size = token.size, rotation = token.rotation || 0){
+      return getTokenCollisionLocalPoints(token).map(point => transformLocalPoint(point, x, y, size, rotation));
+    }
+
+    function polygonCentroid(polygon){
+      if(!polygon?.length) return { x:0, y:0 };
+      let x = 0;
+      let y = 0;
+      polygon.forEach(point => {
+        x += point.x;
+        y += point.y;
+      });
+      return { x:x / polygon.length, y:y / polygon.length };
+    }
+
+    function getPolygonBounds(polygon){
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for(const point of polygon){
+        if(point.x < minX) minX = point.x;
+        if(point.y < minY) minY = point.y;
+        if(point.x > maxX) maxX = point.x;
+        if(point.y > maxY) maxY = point.y;
+      }
+      return { minX, minY, maxX, maxY };
+    }
+
+    function closestPointOnBarrier(point, barrier){
+      const frame = barrier.frame || getBarrierFrame(barrier);
+      const relX = point.x - barrier.x1;
+      const relY = point.y - barrier.y1;
+      const t = clamp((relX * frame.ux + relY * frame.uy) / (frame.length || 1), 0, 1);
+      return {
+        x: barrier.x1 + (barrier.x2 - barrier.x1) * t,
+        y: barrier.y1 + (barrier.y2 - barrier.y1) * t,
+        t,
+      };
+    }
+
+    function barrierCollisionPadding(barrier){
+      return 5;
+    }
+
+    function nudgePointAwayFromBlockingBarriers(point, minDistance = 6, scene = activeScene()){
+      const shifted = { x:point.x, y:point.y };
+      const blockers = getBlockingBarriers(scene);
+      for(let iteration = 0; iteration < 3; iteration++){
+        let changed = false;
+        for(const barrier of blockers){
+          const nearest = closestPointOnBarrier(shifted, barrier);
+          const dx = shifted.x - nearest.x;
+          const dy = shifted.y - nearest.y;
+          const dist = Math.hypot(dx, dy);
+          const required = Math.max(minDistance, barrierCollisionPadding(barrier) + 1.5);
+          if(dist >= required) continue;
+          let nx = dx;
+          let ny = dy;
+          if(dist < 1e-4){
+            const bx = barrier.x2 - barrier.x1;
+            const by = barrier.y2 - barrier.y1;
+            nx = -by;
+            ny = bx;
+            const len = Math.hypot(nx, ny) || 1;
+            nx /= len;
+            ny /= len;
+          } else {
+            nx /= dist;
+            ny /= dist;
+          }
+          const push = required - dist + 0.75;
+          shifted.x += nx * push;
+          shifted.y += ny * push;
+          changed = true;
+        }
+        if(!changed) break;
+      }
+      shifted.x = clamp(shifted.x, 0, scene.width);
+      shifted.y = clamp(shifted.y, 0, scene.height);
+      return shifted;
+    }
+
+    function pointInPolygon(x, y, polygon){
+      let inside = false;
+      for(let i = 0, j = polygon.length - 1; i < polygon.length; j = i++){
+        const xi = polygon[i].x, yi = polygon[i].y;
+        const xj = polygon[j].x, yj = polygon[j].y;
+        const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / ((yj - yi) || 1e-9) + xi);
+        if(intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    function segmentsIntersect(a1, a2, b1, b2){
+      const cross = (p, q, r) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+      const onSeg = (p, q, r) => Math.min(p.x, r.x) - 1e-6 <= q.x && q.x <= Math.max(p.x, r.x) + 1e-6 && Math.min(p.y, r.y) - 1e-6 <= q.y && q.y <= Math.max(p.y, r.y) + 1e-6;
+      const d1 = cross(a1, a2, b1);
+      const d2 = cross(a1, a2, b2);
+      const d3 = cross(b1, b2, a1);
+      const d4 = cross(b1, b2, a2);
+      if(((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
+      if(Math.abs(d1) < 1e-6 && onSeg(a1, b1, a2)) return true;
+      if(Math.abs(d2) < 1e-6 && onSeg(a1, b2, a2)) return true;
+      if(Math.abs(d3) < 1e-6 && onSeg(b1, a1, b2)) return true;
+      if(Math.abs(d4) < 1e-6 && onSeg(b1, a2, b2)) return true;
+      return false;
+    }
+
+    function distancePointToSegment(point, barrier){
+      const nearest = closestPointOnBarrier(point, barrier);
+      return Math.hypot(point.x - nearest.x, point.y - nearest.y);
+    }
+
+    function getBarrierFrame(barrier){
+      if(barrier.frame) return barrier.frame;
+      const vx = barrier.x2 - barrier.x1;
+      const vy = barrier.y2 - barrier.y1;
+      const length = Math.hypot(vx, vy) || 1;
+      const ux = vx / length;
+      const uy = vy / length;
+      return {
+        length,
+        ux,
+        uy,
+        nx: -uy,
+        ny: ux,
+      };
+    }
+
+    function pointWithinBarrierBody(point, barrier, halfWidth, capPadding = 0){
+      const frame = getBarrierFrame(barrier);
+      const relX = point.x - barrier.x1;
+      const relY = point.y - barrier.y1;
+      const longitudinal = relX * frame.ux + relY * frame.uy;
+      const lateral = relX * frame.nx + relY * frame.ny;
+      return longitudinal >= -capPadding && longitudinal <= frame.length + capPadding && Math.abs(lateral) <= halfWidth;
+    }
+
+    function barrierTouchesBounds(barrier, bounds, padding = 10){
+      return !(barrier.maxX < bounds.minX - padding || barrier.minX > bounds.maxX + padding || barrier.maxY < bounds.minY - padding || barrier.minY > bounds.maxY + padding);
+    }
+
+    function barrierLength(barrier){
+      return Math.round(Math.hypot(barrier.x2 - barrier.x1, barrier.y2 - barrier.y1));
+    }
+
+    function isBlockingBarrier(barrier){
+      return barrier.type === 'wall' || (barrier.type === 'door' && !barrier.open);
+    }
+
+    function getBlockingBarriers(scene = activeScene()){
+      const version = scene._barrierVersion || 0;
+      const cached = runtime.blockingBarrierCache.get(scene.id);
+      if(cached?.version === version) return cached.list;
+      const list = (scene.barriers || [])
+        .filter(barrier => barrier && isBlockingBarrier(barrier))
+        .map(barrier => {
+          const clone = {
+            id: barrier.id,
+            type: 'wall',
+            x1: barrier.x1,
+            y1: barrier.y1,
+            x2: barrier.x2,
+            y2: barrier.y2,
+            open: false,
+          };
+          clone.frame = getBarrierFrame(clone);
+          clone.minX = Math.min(clone.x1, clone.x2);
+          clone.maxX = Math.max(clone.x1, clone.x2);
+          clone.minY = Math.min(clone.y1, clone.y2);
+          clone.maxY = Math.max(clone.y1, clone.y2);
+          return clone;
+        });
+      runtime.blockingBarrierCache.set(scene.id, { version, list });
+      return list;
+    }
+
+    function segmentIntersectsPolygon(barrier, polygon){
+      const a = { x: barrier.x1, y: barrier.y1 };
+      const b = { x: barrier.x2, y: barrier.y2 };
+      for(let i = 0; i < polygon.length; i++){
+        const p1 = polygon[i];
+        const p2 = polygon[(i + 1) % polygon.length];
+        if(segmentsIntersect(a, b, p1, p2)) return true;
+      }
+      return pointInPolygon(a.x, a.y, polygon) || pointInPolygon(b.x, b.y, polygon);
+    }
+
+    function tokenCollidesAt(token, x, y){
+      const polygon = getTokenWorldPolygon(token, x, y, token.size, token.rotation || 0);
+      const bounds = getPolygonBounds(polygon);
+      const candidates = getBlockingBarriers().filter(barrier => barrierTouchesBounds(barrier, bounds, barrierCollisionPadding(barrier) + 8));
+      if(!candidates.length) return false;
+      const samples = getTokenCollisionWorldPoints(token, x, y, token.size, token.rotation || 0);
+      return candidates.some(barrier => {
+        if(segmentIntersectsPolygon(barrier, polygon)) return true;
+        const padding = barrierCollisionPadding(barrier);
+        for(const point of samples){
+          if(pointWithinBarrierBody(point, barrier, padding)) return true;
+        }
+        return false;
+      });
+    }
+
+    function resolveTokenMovement(token, targetX, targetY, originX = token.x, originY = token.y){
+      const dx = targetX - originX;
+      const dy = targetY - originY;
+      const distance = Math.hypot(dx, dy);
+      if(distance < 0.2){
+        return tokenCollidesAt(token, targetX, targetY) ? { x: originX, y: originY } : { x: targetX, y: targetY };
+      }
+
+      const stepSize = Math.max(1.2, Math.min(2.6, token.size * 0.022));
+      const steps = Math.max(1, Math.ceil(distance / stepSize));
+      let currentX = originX;
+      let currentY = originY;
+
+      for(let i = 1; i <= steps; i++){
+        const desiredX = originX + dx * (i / steps);
+        const desiredY = originY + dy * (i / steps);
+        const moveX = desiredX - currentX;
+        const moveY = desiredY - currentY;
+
+        const diagonal = { x: currentX + moveX, y: currentY + moveY };
+        if(!tokenCollidesAt(token, diagonal.x, diagonal.y)){
+          currentX = diagonal.x;
+          currentY = diagonal.y;
+          continue;
+        }
+
+        const candidates = [];
+        const axisX = { x: currentX + moveX, y: currentY };
+        if(Math.abs(moveX) > 0.001 && !tokenCollidesAt(token, axisX.x, axisX.y)){
+          candidates.push(axisX);
+        }
+
+        const axisY = { x: currentX, y: currentY + moveY };
+        if(Math.abs(moveY) > 0.001 && !tokenCollidesAt(token, axisY.x, axisY.y)){
+          candidates.push(axisY);
+        }
+
+        if(candidates.length){
+          candidates.sort((a, b) => {
+            const da = Math.hypot(desiredX - a.x, desiredY - a.y);
+            const db = Math.hypot(desiredX - b.x, desiredY - b.y);
+            return da - db;
+          });
+          currentX = candidates[0].x;
+          currentY = candidates[0].y;
+          continue;
+        }
+
+        const microSteps = 4;
+        let slipped = false;
+        for(let m = 1; m <= microSteps; m++){
+          const portion = m / microSteps;
+          const partialX = currentX + moveX * portion;
+          const partialY = currentY + moveY * portion;
+          if(!tokenCollidesAt(token, partialX, partialY)){
+            currentX = partialX;
+            currentY = partialY;
+            slipped = true;
+          } else {
+            const slipX = { x: partialX, y: currentY };
+            const slipY = { x: currentX, y: partialY };
+            if(!tokenCollidesAt(token, slipX.x, slipX.y)){
+              currentX = slipX.x;
+              slipped = true;
+            }
+            if(!tokenCollidesAt(token, currentX, slipY.y)){
+              currentY = slipY.y;
+              slipped = true;
+            }
+            break;
+          }
+        }
+
+        if(!slipped) break;
+      }
+
+      if(tokenCollidesAt(token, currentX, currentY)){
+        return { x: originX, y: originY };
+      }
+      return { x: currentX, y: currentY };
+    }
+
+    function nearestBarrier(point, threshold = 10 / Math.max(activeScene().zoom || 1, 0.25)){
+      let best = null;
+      let bestDistance = threshold;
+      (activeScene().barriers || []).forEach(barrier => {
+        const dist = distancePointToSegment(point, barrier);
+        if(dist <= bestDistance){
+          bestDistance = dist;
+          best = barrier;
+        }
+      });
+      return best;
+    }
+
+    function raySegmentIntersection(px, py, dx, dy, x1, y1, x2, y2){
+      const sx = x2 - x1;
+      const sy = y2 - y1;
+      const denom = dx * sy - dy * sx;
+      if(Math.abs(denom) < 1e-8) return null;
+      const qpx = x1 - px;
+      const qpy = y1 - py;
+      const t = (qpx * sy - qpy * sx) / denom;
+      const u = (qpx * dy - qpy * dx) / denom;
+      if(t >= 0 && u >= 0 && u <= 1){
+        return { dist:t, x:px + dx * t, y:py + dy * t };
+      }
+      return null;
+    }
+
+    function visibilityPathFromPoints(points){
+      if(!points?.length) return '';
+      return `M ${points.map((point, index) => `${index ? 'L' : ''} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ')} Z`;
+    }
+
+    function buildVisibilityPolygon(source, scene = activeScene()){
+      const blockers = [
+        ...getBlockingBarriers(scene),
+        { x1:0, y1:0, x2:scene.width, y2:0 },
+        { x1:scene.width, y1:0, x2:scene.width, y2:scene.height },
+        { x1:scene.width, y1:scene.height, x2:0, y2:scene.height },
+        { x1:0, y1:scene.height, x2:0, y2:0 },
+      ];
+      const eps = 0.00018;
+      const angles = [];
+      for(let i = 0; i < 256; i++) angles.push((i / 256) * Math.PI * 2);
+      blockers.forEach(barrier => {
+        [[barrier.x1, barrier.y1], [barrier.x2, barrier.y2]].forEach(([x, y]) => {
+          if(Math.hypot(x - source.x, y - source.y) > source.radius + 48) return;
+          const angle = Math.atan2(y - source.y, x - source.x);
+          angles.push(angle - eps, angle, angle + eps);
+        });
+      });
+      const points = angles.map(angle => {
+        const dx = Math.cos(angle);
+        const dy = Math.sin(angle);
+        let dist = source.radius;
+        blockers.forEach(barrier => {
+          const hit = raySegmentIntersection(source.x, source.y, dx, dy, barrier.x1, barrier.y1, barrier.x2, barrier.y2);
+          const minHitDistance = Math.max(1.5, Number(source.blockerIgnoreDistance) || 0);
+          if(hit && hit.dist >= minHitDistance && hit.dist < dist) dist = Math.max(0, hit.dist - 0.35);
+        });
+        return {
+          angle,
+          x: clamp(source.x + dx * dist, 0, scene.width),
+          y: clamp(source.y + dy * dist, 0, scene.height),
+        };
+      }).sort((a, b) => a.angle - b.angle);
+      return {
+        source,
+        points,
+        path: visibilityPathFromPoints(points),
+      };
+    }
+
+    function renderBarriers(){
+      const scene = activeScene();
+      barrierCtx.clearRect(0, 0, scene.width, scene.height);
+      if(state.ui.previewMode === 'player' || !scene.layers.visibility.barriers) return;
+      barrierCtx.save();
+      barrierCtx.lineCap = 'round';
+      barrierCtx.lineJoin = 'round';
+      (scene.barriers || []).forEach(barrier => {
+        const selected = state.ui.selected?.type === 'barrier' && state.ui.selected.id === barrier.id;
+        const isClosedDoor = barrier.type === 'door' && !barrier.open;
+        const isOpenDoor = barrier.type === 'door' && barrier.open;
+        if(selected){
+          barrierCtx.strokeStyle = isOpenDoor ? 'rgba(18,183,106,.26)' : 'rgba(91,124,255,.34)';
+          barrierCtx.lineWidth = isOpenDoor ? 16 : 12;
+          barrierCtx.beginPath();
+          barrierCtx.moveTo(barrier.x1, barrier.y1);
+          barrierCtx.lineTo(barrier.x2, barrier.y2);
+          barrierCtx.stroke();
+        }
+        if(barrier.type === 'wall' || isClosedDoor){
+          barrierCtx.strokeStyle = 'rgba(32,45,66,.92)';
+          barrierCtx.lineWidth = 6;
+          barrierCtx.beginPath();
+          barrierCtx.moveTo(barrier.x1, barrier.y1);
+          barrierCtx.lineTo(barrier.x2, barrier.y2);
+          barrierCtx.stroke();
+        }
+        if(barrier.type === 'door'){
+          const mx = (barrier.x1 + barrier.x2) / 2;
+          const my = (barrier.y1 + barrier.y2) / 2;
+          if(isOpenDoor){
+            barrierCtx.fillStyle = 'rgba(18,183,106,.98)';
+            barrierCtx.beginPath();
+            barrierCtx.arc(mx, my, 4.5, 0, Math.PI * 2);
+            barrierCtx.fill();
+            barrierCtx.strokeStyle = 'rgba(18,183,106,.8)';
+            barrierCtx.lineWidth = 2.25;
+            barrierCtx.beginPath();
+            barrierCtx.arc(mx, my, 9, -Math.PI * 0.2, Math.PI * 0.65);
+            barrierCtx.stroke();
+          }
+        }
+      });
+      if(runtime.barrierDraft){
+        const preview = runtime.barrierPreview || runtime.barrierDraft;
+        barrierCtx.setLineDash([10, 8]);
+        barrierCtx.strokeStyle = runtime.barrierDraft.type === 'door' ? 'rgba(245,158,11,.7)' : 'rgba(91,124,255,.7)';
+        barrierCtx.lineWidth = runtime.barrierDraft.type === 'door' ? 8 : 6;
+        barrierCtx.beginPath();
+        barrierCtx.moveTo(runtime.barrierDraft.x1, runtime.barrierDraft.y1);
+        barrierCtx.lineTo(preview.x2 ?? runtime.barrierDraft.x1, preview.y2 ?? runtime.barrierDraft.y1);
+        barrierCtx.stroke();
+        barrierCtx.setLineDash([]);
+      }
+      barrierCtx.restore();
+    }
+
+    function renderBarrierList(){
+      const scene = activeScene();
+      if(!els.barrierList) return;
+      els.barrierList.innerHTML = '';
+      if(!(scene.barriers || []).length){
+        els.barrierList.innerHTML = '<div class="empty">Sem paredes ou portas nesta cena.</div>';
+        return;
+      }
+      scene.barriers.forEach((barrier, index) => {
+        const card = document.createElement('div');
+        card.className = `barrier-card${state.ui.selected?.type === 'barrier' && state.ui.selected.id === barrier.id ? ' active' : ''}`;
+        card.innerHTML = `
+          <div class="barrier-meta">
+            <strong>${escapeHtml(barrier.type === 'door' ? 'Porta' : 'Parede')} ${index + 1}</strong>
+            <span class="tiny">${barrierLength(barrier)} px</span>
+          </div>
+          <div class="tiny">${barrier.type === 'door' ? (barrier.open ? 'Aberta' : 'Fechada') : 'Bloqueio sólido'} • ${Math.round(barrier.x1)},${Math.round(barrier.y1)} → ${Math.round(barrier.x2)},${Math.round(barrier.y2)}</div>
+          <div class="inline-actions">
+            <button class="btn" data-action="focus">Selecionar</button>
+            ${barrier.type === 'door' ? `<button class="btn" data-action="toggle">${barrier.open ? 'Fechar' : 'Abrir'}</button>` : ''}
+            <button class="btn danger" data-action="delete">Excluir</button>
+          </div>
+        `;
+        card.querySelector('[data-action="focus"]').addEventListener('click', () => {
+          setSelected('barrier', barrier.id);
+        });
+        const toggleBtn = card.querySelector('[data-action="toggle"]');
+        if(toggleBtn){
+          toggleBtn.addEventListener('click', () => {
+            barrier.open = !barrier.open;
+            invalidateSceneCaches(scene);
+            renderAll();
+          });
+        }
+        card.querySelector('[data-action="delete"]').addEventListener('click', () => {
+          scene.barriers = scene.barriers.filter(item => item.id !== barrier.id);
+          invalidateSceneCaches(scene);
+          if(state.ui.selected?.type === 'barrier' && state.ui.selected.id === barrier.id) state.ui.selected = null;
+          renderAll();
+        });
+        els.barrierList.appendChild(card);
+      });
+    }
+
+    function getPlayerVisionSources(scene = activeScene()){
+      if(state.ui.previewMode !== 'player') return [];
+      if(!scene.layers.visibility.fog || (scene.fogMode || 'radial') !== 'radial') return [];
+      return scene.tokens
+        .filter(token => token.controlledBy && !token.hidden && token.visionEnabled !== false)
+        .map(token => {
+          const centroid = polygonCentroid(getTokenWorldPolygon(token));
+          const safeAnchor = nudgePointAwayFromBlockingBarriers(centroid, Math.max(6, token.size * 0.08), scene);
+          return {
+            token,
+            x: safeAnchor.x,
+            y: safeAnchor.y,
+            radius: Math.max(60, Number(token.visionRadius) || 280),
+            softness: Math.max(0, Number(token.visionSoftness) || 100),
+            blockerIgnoreDistance: Math.max(3, token.size * 0.045),
+          };
+        });
+    }
+
+    function pointVisibleInSources(x, y, sources){
+      const scene = activeScene();
+      if(state.ui.previewMode !== 'player') return true;
+      if(!scene.layers.visibility.fog || (scene.fogMode || 'radial') !== 'radial') return true;
+      if(!runtime.visionPolygons.length) return false;
+      return runtime.visionPolygons.some(polygon => pointInPolygon(x, y, polygon.points));
+    }
+
+    function rectTouchesVisibleSources(x, y, width = 0, height = width){
+      const scene = activeScene();
+      if(state.ui.previewMode !== 'player') return true;
+      if(!scene.layers.visibility.fog || (scene.fogMode || 'radial') !== 'radial') return true;
+      if(!runtime.visionPolygons.length) return false;
+      const samples = [
+        { x: x + width / 2, y: y + height / 2 },
+        { x, y },
+        { x: x + width, y },
+        { x, y: y + height },
+        { x: x + width, y: y + height },
+        { x: x + width / 2, y },
+        { x: x + width / 2, y: y + height },
+        { x, y: y + height / 2 },
+        { x: x + width, y: y + height / 2 },
+      ];
+      return samples.some(point => pointVisibleInSources(point.x, point.y));
+    }
+
+    function buildVisionClipPath(polygons){
+      if(!polygons?.length) return 'none';
+      return `path('${polygons.map(polygon => polygon.path).join(' ')}')`;
+    }
+
+    function applyEntityVisionMask(){
+      const scene = activeScene();
+      const playerFog = state.ui.previewMode === 'player'
+        && scene.layers.visibility.fog
+        && (scene.fogMode || 'radial') === 'radial';
+      const clipValue = playerFog
+        ? (runtime.visionPolygons.length ? runtime.visionClipPath : 'polygon(0 0, 0 0, 0 0)')
+        : 'none';
+      els.entityLayer.style.clipPath = clipValue;
+      els.entityLayer.style.webkitClipPath = clipValue;
+    }
+
+    function renderFogOverlay(){
+      const scene = activeScene();
+      fogCtx.clearRect(0,0,scene.width,scene.height);
+      runtime.visionSources = getPlayerVisionSources(scene);
+      runtime.visionPolygons = runtime.visionSources.map(source => buildVisibilityPolygon(source, scene)).filter(polygon => polygon.points.length >= 3);
+      runtime.visionClipPath = buildVisionClipPath(runtime.visionPolygons);
+      applyEntityVisionMask();
+      if(state.ui.previewMode !== 'player') return;
+      if(!scene.layers.visibility.fog || (scene.fogMode || 'radial') !== 'radial') return;
+      const opacity = clamp((Number(scene.fogOpacity) || 58) / 100, .2, .85);
+      fogCtx.save();
+      fogCtx.fillStyle = `rgba(8,10,16,${opacity})`;
+      fogCtx.fillRect(0, 0, scene.width, scene.height);
+      if(runtime.visionPolygons.length){
+        fogCtx.globalCompositeOperation = 'destination-out';
+        runtime.visionPolygons.forEach(polygon => {
+          const source = polygon.source;
+          const path = new Path2D(polygon.path);
+          if(source.softness > 0){
+            fogCtx.save();
+            fogCtx.filter = `blur(${Math.min(48, source.softness * 0.16).toFixed(1)}px)`;
+            fogCtx.fill(path);
+            fogCtx.restore();
+          }
+          fogCtx.fill(path);
+        });
+      }
+      fogCtx.restore();
+    }
+
+    function loadSceneIntoCanvas(){
+      const scene = activeScene();
+      els.mapImage.src = scene.mapSrc || '';
+      resizeScene(scene.width, scene.height);
+      if(!scene.viewX && !scene.viewY && scene.zoom === 1 && (scene.width !== 1920 || scene.height !== 1080 || scene.mapSrc)){
+        requestAnimationFrame(fitScene);
+      }
+      updateView();
+      renderBarriers();
+      renderFogOverlay();
+    }
+
+    function saveCurrentFog(){ return; }
+
+    function loadImage(src){
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }
+
+    async function detectContourFromImage(src){
+      const img = await loadImage(src);
+      const width = img.naturalWidth || img.width;
+      const height = img.naturalHeight || img.height;
+      if(!width || !height) return null;
+      const maxSide = 240;
+      const scale = Math.min(1, maxSide / Math.max(width, height));
+      const w = Math.max(16, Math.round(width * scale));
+      const h = Math.max(16, Math.round(height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d', { willReadFrequently:true });
+      ctx.drawImage(img, 0, 0, w, h);
+      const { data } = ctx.getImageData(0, 0, w, h);
+
+      let minX = w, minY = h, maxX = -1, maxY = -1;
+      let opaqueCount = 0;
+      let transparentishCount = 0;
+
+      for(let y = 0; y < h; y++){
+        for(let x = 0; x < w; x++){
+          const alpha = data[(y * w + x) * 4 + 3];
+          if(alpha > 24){
+            opaqueCount++;
+            if(x < minX) minX = x;
+            if(y < minY) minY = y;
+            if(x > maxX) maxX = x;
+            if(y > maxY) maxY = y;
+          }
+          if(alpha < 245) transparentishCount++;
+        }
+      }
+
+      if(maxX < 0 || opaqueCount < 24) return null;
+      const transparencyRatio = transparentishCount / (w * h);
+      if(transparencyRatio < 0.03) return null;
+
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
+      const maxRadius = Math.hypot(Math.max(centerX - minX, maxX - centerX) + 3, Math.max(centerY - minY, maxY - centerY) + 3);
+      const rays = 72;
+      const rawPoints = [];
+
+      const alphaAt = (x, y) => {
+        if(x < 0 || y < 0 || x >= w || y >= h) return 0;
+        return data[(Math.round(y) * w + Math.round(x)) * 4 + 3];
+      };
+
+      for(let i = 0; i < rays; i++){
+        const angle = -Math.PI / 2 + (i / rays) * Math.PI * 2;
+        let found = null;
+        for(let r = maxRadius; r >= 0; r -= 1){
+          const x = Math.round(centerX + Math.cos(angle) * r);
+          const y = Math.round(centerY + Math.sin(angle) * r);
+          if(alphaAt(x, y) > 24){
+            found = { x, y };
+            break;
+          }
+        }
+        if(found) rawPoints.push(found);
+      }
+
+      if(rawPoints.length < 8) return null;
+
+      const normalized = rawPoints.map(point => ({
+        x: clamp(((point.x + 0.5) / w) * 100, 0, 100),
+        y: clamp(((point.y + 0.5) / h) * 100, 0, 100),
+      }));
+
+      const simplified = [];
+      normalized.forEach(point => {
+        const previous = simplified[simplified.length - 1];
+        if(!previous || Math.hypot(point.x - previous.x, point.y - previous.y) > 1.2){
+          simplified.push(point);
+        }
+      });
+      if(simplified.length >= 3){
+        const first = simplified[0];
+        const last = simplified[simplified.length - 1];
+        if(Math.hypot(first.x - last.x, first.y - last.y) < 1.2) simplified.pop();
+      }
+
+      if(simplified.length < 6) return null;
+      return {
+        contourPolygon: simplified.map(point => `${point.x.toFixed(2)}% ${point.y.toFixed(2)}%`).join(', '),
+        contourPoints: simplified.map(point => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(' '),
+      };
+    }
+
+    async function buildAssetRecord(name, src){
+      const asset = { id: uid(), name, src, contourPolygon:'', contourPoints:'' };
+      try{
+        const contour = await detectContourFromImage(src);
+        if(contour){
+          asset.contourPolygon = contour.contourPolygon;
+          asset.contourPoints = contour.contourPoints;
+        }
+      } catch(err){}
+      return asset;
+    }
+
+    async function enrichAssetsWithContours(){
+      const pending = state.campaign.assets.filter(asset => asset && asset.src && asset.contourPolygon == null);
+      if(!pending.length) return;
+      for(const asset of pending){
+        asset.contourPolygon = '';
+        asset.contourPoints = '';
+        try{
+          const contour = await detectContourFromImage(asset.src);
+          if(contour){
+            asset.contourPolygon = contour.contourPolygon;
+            asset.contourPoints = contour.contourPoints;
+          }
+        } catch(err){}
+      }
+      state.campaign.scenes.forEach(scene => {
+        scene.tokens.forEach(token => {
+          const asset = state.campaign.assets.find(item => item.id === token.assetId);
+          if(asset && asset.contourPolygon && !token.contourPolygon){
+            token.contourPolygon = asset.contourPolygon;
+            token.contourPoints = asset.contourPoints;
+          }
+        });
+      });
+      renderAll();
+    }
+
+    async function addAsset(name, src){
+      const asset = await buildAssetRecord(name, src);
+      state.campaign.assets.push(asset);
+      renderAssets();
+      updateWelcome();
+      renderTop();
+      return asset;
+    }
+
+    function addTokenFromAsset(asset){
+      const scene = activeScene();
+      const size = scene.gridSize;
+      const token = {
+        id: uid(),
+        assetId: asset.id,
+        name: asset.name.replace(/\.[^.]+$/, ''),
+        src: asset.src,
+        x: snap(scene.width / 2 - size / 2),
+        y: snap(scene.height / 2 - size / 2),
+        size,
+        rotation: 0,
+        controlledBy: '',
+        hidden: false,
+        visionEnabled: true,
+        visionRadius: Math.max(60, Number(scene.fogRadiusDefault) || 280),
+        visionSoftness: 100,
+        hitboxMode: asset.contourPolygon ? 'contour' : 'box',
+        frameMode: 'none',
+        contourPolygon: asset.contourPolygon || '',
+        contourPoints: asset.contourPoints || '',
+      };
+      scene.tokens.push(token);
+      setSelected('token', token.id);
+      renderAll();
+    }
+
+    async function addQuickToken(){
+      const scene = activeScene();
+      const name = els.quickTokenName.value.trim() || `Token ${scene.tokens.length + 1}`;
+      const svg = `data:image/svg+xml;utf8,${encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#1c2433"/>
+              <stop offset="100%" stop-color="#0e131d"/>
+            </linearGradient>
+          </defs>
+          <rect width="256" height="256" rx="40" fill="url(#g)"/>
+          <circle cx="128" cy="96" r="42" fill="#9bb8ff" opacity=".95"/>
+          <rect x="58" y="150" width="140" height="46" rx="18" fill="#9bb8ff" opacity=".92"/>
+        </svg>
+      `)}`;
+      const asset = await buildAssetRecord(name, svg);
+      state.campaign.assets.push(asset);
+      els.quickTokenName.value = '';
+      renderAssets();
+      addTokenFromAsset(asset);
+    }
+
+    function addNote(x, y){
+      const scene = activeScene();
+      scene.notes.push({
+        id: uid(),
+        x, y,
+        text: (state.ui.noteDraft || 'Nova nota').trim(),
+        gmOnly: true,
+      });
+      setSelected('note', scene.notes[scene.notes.length - 1].id);
+      renderAll();
+    }
+
+    function setSelected(type, id){
+      state.ui.selected = type && id ? { type, id } : null;
+      renderBarriers();
+      renderBarrierList();
+      renderEntities();
+      renderInspector();
+      renderObjects();
+    }
+
+    function deleteSelected(){
+      const scene = activeScene();
+      if(!state.ui.selected) return;
+      if(state.ui.selected.type === 'token') scene.tokens = scene.tokens.filter(t => t.id !== state.ui.selected.id);
+      if(state.ui.selected.type === 'barrier'){
+        scene.barriers = (scene.barriers || []).filter(b => b.id !== state.ui.selected.id);
+        invalidateSceneCaches(scene);
+      }
+      if(state.ui.selected.type === 'note') scene.notes = scene.notes.filter(n => n.id !== state.ui.selected.id);
+      state.ui.selected = null;
+      renderAll();
+    }
+
+    function duplicateSelected(){
+      const token = selectedToken();
+      if(!token) return;
+      const scene = activeScene();
+      const clone = structuredClone(token);
+      clone.id = uid();
+      clone.x = snap(token.x + scene.gridSize / 2);
+      clone.y = snap(token.y + scene.gridSize / 2);
+      scene.tokens.push(clone);
+      setSelected('token', clone.id);
+      renderAll();
+    }
+
+    function duplicateScene(sceneId){
+      const scene = state.campaign.scenes.find(s => s.id === sceneId);
+      if(!scene) return;
+      saveCurrentFog();
+      const clone = structuredClone(scene);
+      clone.id = uid();
+      clone.name = `${scene.name} (cópia)`;
+      state.campaign.scenes.push(clone);
+      setActiveScene(clone.id);
+    }
+
+    function removeScene(sceneId){
+      if(state.campaign.scenes.length <= 1){ alert('A campanha precisa ter pelo menos uma cena.'); return; }
+      state.campaign.scenes = state.campaign.scenes.filter(s => s.id !== sceneId);
+      if(state.campaign.currentSceneId === sceneId){ state.campaign.currentSceneId = state.campaign.scenes[0].id; loadSceneIntoCanvas(); }
+      renderAll();
+    }
+
+    function addScene(){
+      const index = state.campaign.scenes.length + 1;
+      const scene = createScene(`Cena ${index}`);
+      state.campaign.scenes.push(scene);
+      setActiveScene(scene.id);
+    }
+
+    function addPlayer(){
+      const name = els.playerNameInput.value.trim();
+      if(!name) return;
+      state.campaign.players.push({
+        id: uid(),
+        name,
+        role: els.playerRoleInput.value,
+        color: els.playerColorInput.value,
+        connected: true,
+      });
+      els.playerNameInput.value = '';
+      renderAll();
+    }
+
+    function roleLabel(role){
+      return ({'gm':'Mestre','player':'Jogador','observer':'Observador','co-gm':'Co-GM'})[role] || role;
+    }
+
+    function truncate(text, len){ text = String(text || ''); return text.length > len ? text.slice(0, len - 1) + '…' : text; }
+
+    function roll(label){
+      const max = Number(label.replace('d','')) || 20;
+      const result = 1 + Math.floor(Math.random() * max);
+      state.campaign.diceLog.push({ label, result, time: nowTime() });
+      if(state.campaign.diceLog.length > 20) state.campaign.diceLog.shift();
+      renderDiceLog();
+    }
+
+    function serialize(){
+      saveCurrentFog();
+      return JSON.stringify(state);
+    }
+
+    function loadFromData(data){
+      const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+      if(!parsed.campaign || !Array.isArray(parsed.campaign.scenes) || !parsed.campaign.scenes.length) throw new Error('Estrutura inválida');
+      state.campaign = parsed.campaign;
+      state.ui = { ...state.ui, ...parsed.ui, selected:null };
+      if(!['select','pan','note','wall','door'].includes(state.ui.tool)) state.ui.tool = 'select';
+      state.campaign.assets = Array.isArray(state.campaign.assets) ? state.campaign.assets : [];
+      state.campaign.assets.forEach(asset => {
+        asset.contourPolygon = typeof asset.contourPolygon === 'string' ? asset.contourPolygon : null;
+        asset.contourPoints = typeof asset.contourPoints === 'string' ? asset.contourPoints : null;
+      });
+      if(!state.campaign.currentSceneId || !state.campaign.scenes.some(s => s.id === state.campaign.currentSceneId)){
+        state.campaign.currentSceneId = state.campaign.scenes[0].id;
+      }
+      state.campaign.scenes.forEach(scene => {
+        scene.layers = scene.layers || defaultLayers();
+        scene.layers.visibility = { ...defaultLayers().visibility, ...(scene.layers.visibility || {}) };
+        scene.layers.locked = { ...defaultLayers().locked, ...(scene.layers.locked || {}) };
+        scene.tokens = Array.isArray(scene.tokens) ? scene.tokens : [];
+        scene.notes = Array.isArray(scene.notes) ? scene.notes : [];
+        scene.barriers = Array.isArray(scene.barriers) ? scene.barriers : [];
+        scene.gridSize = scene.gridSize || 64;
+        scene.zoom = scene.zoom || 1;
+        scene.viewX = Number.isFinite(scene.viewX) ? scene.viewX : 0;
+        scene.viewY = Number.isFinite(scene.viewY) ? scene.viewY : 0;
+        scene.fogMode = scene.fogMode || 'radial';
+        scene.fogOpacity = Number.isFinite(scene.fogOpacity) ? scene.fogOpacity : 58;
+        scene.fogRadiusDefault = Number.isFinite(scene.fogRadiusDefault) ? scene.fogRadiusDefault : 280;
+        scene.snapEnabled = !!scene.snapEnabled;
+        scene._barrierVersion = Number.isFinite(scene._barrierVersion) ? scene._barrierVersion : 1;
+        scene.barriers.forEach(barrier => {
+          barrier.type = barrier.type === 'door' ? 'door' : 'wall';
+          barrier.open = barrier.type === 'door' ? !!barrier.open : false;
+          barrier.x1 = Number(barrier.x1) || 0;
+          barrier.y1 = Number(barrier.y1) || 0;
+          barrier.x2 = Number(barrier.x2) || 0;
+          barrier.y2 = Number(barrier.y2) || 0;
+        });
+        scene.tokens.forEach(token => {
+          const asset = state.campaign.assets.find(item => item.id === token.assetId);
+          token.hitboxMode = token.hitboxMode || 'box';
+          token.frameMode = 'none';
+          token.visionEnabled = token.visionEnabled !== false;
+          token.visionRadius = Number.isFinite(token.visionRadius) ? token.visionRadius : 280;
+          token.visionSoftness = Number.isFinite(token.visionSoftness) ? token.visionSoftness : 100;
+          token.contourPolygon = typeof token.contourPolygon === 'string' ? token.contourPolygon : (asset?.contourPolygon ?? '');
+          token.contourPoints = typeof token.contourPoints === 'string' ? token.contourPoints : (asset?.contourPoints ?? '');
+        });
+      });
+      state.campaign.players = Array.isArray(state.campaign.players) ? state.campaign.players : [];
+      state.campaign.initiative = Array.isArray(state.campaign.initiative) ? state.campaign.initiative : [];
+      state.campaign.diceLog = Array.isArray(state.campaign.diceLog) ? state.campaign.diceLog : [];
+      runtime.blockingBarrierCache.clear();
+      runtime.gridCacheKey = '';
+      loadSceneIntoCanvas();
+      renderAll();
+      enrichAssetsWithContours();
+    }
+
+    function saveLocal(){
+      localStorage.setItem(STORAGE_KEY, serialize());
+      updateStatus('salvo localmente');
+    }
+
+    function loadLocal(){
+      const data = localStorage.getItem(STORAGE_KEY);
+      if(!data){ alert('Nenhum salvamento local encontrado.'); return; }
+      loadFromData(data);
+      updateStatus('carregado do navegador');
+    }
+
+    function exportJson(){
+      const blob = new Blob([serialize()], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${slug(state.campaign.name || 'campanha')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function slug(text){ return String(text || 'arquivo').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+
+    function handleViewportPointerDown(e){
+      const scene = activeScene();
+      const point = worldPoint(e.clientX, e.clientY);
+      els.coordsText.textContent = `x: ${Math.round(point.x)} • y: ${Math.round(point.y)}`;
+
+      if(state.ui.tool === 'pan'){
+        startPan(e);
+        return;
+      }
+
+      if(state.ui.tool === 'note'){
+        if(layerLocked('notes') || !layerVisible('notes')) return;
+        addNote(point.x, point.y);
+        return;
+      }
+
+      if(state.ui.tool === 'wall' || state.ui.tool === 'door'){
+        if(layerLocked('barriers') || !layerVisible('barriers')) return;
+        const x = e.shiftKey ? point.x : snap(point.x);
+        const y = e.shiftKey ? point.y : snap(point.y);
+        if(!runtime.barrierDraft){
+          runtime.barrierDraft = { type: state.ui.tool, x1:x, y1:y };
+          runtime.barrierPreview = { x2:x, y2:y };
+          setSelected(null, null);
+          renderBarriers();
+          updateStatus('clique no fim do segmento');
+          return;
+        }
+        const barrier = {
+          id: uid(),
+          type: runtime.barrierDraft.type,
+          x1: runtime.barrierDraft.x1,
+          y1: runtime.barrierDraft.y1,
+          x2: x,
+          y2: y,
+          open: runtime.barrierDraft.type === 'door' ? false : false,
+        };
+        runtime.barrierDraft = null;
+        runtime.barrierPreview = null;
+        if(Math.hypot(barrier.x2 - barrier.x1, barrier.y2 - barrier.y1) >= 8){
+          scene.barriers.push(barrier);
+          invalidateSceneCaches(scene);
+          setSelected('barrier', barrier.id);
+          renderAll();
+        } else {
+          renderBarriers();
+        }
+        return;
+      }
+
+      if(state.ui.tool === 'select'){
+        const hitBarrier = nearestBarrier(point);
+        if(hitBarrier){
+          setSelected('barrier', hitBarrier.id);
+          return;
+        }
+        setSelected(null, null);
+      }
+    }
+
+    function startPan(e){
+      const scene = activeScene();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const baseX = scene.viewX;
+      const baseY = scene.viewY;
+      const move = ev => {
+        scene.viewX = baseX + (ev.clientX - startX);
+        scene.viewY = baseY + (ev.clientY - startY);
+        updateView();
+      };
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    }
+
+    function startTokenDrag(e, token){
+      const scene = activeScene();
+      const start = worldPoint(e.clientX, e.clientY);
+      const grabOffsetX = start.x - token.x;
+      const grabOffsetY = start.y - token.y;
+      const move = ev => {
+        const p = worldPoint(ev.clientX, ev.clientY);
+        let nx = clamp(p.x - grabOffsetX, 0, Math.max(0, scene.width - token.size));
+        let ny = clamp(p.y - grabOffsetY, 0, Math.max(0, scene.height - token.size));
+        if(!ev.shiftKey){
+          nx = snap(nx);
+          ny = snap(ny);
+        }
+        const resolved = resolveTokenMovement(token, nx, ny, token.x, token.y);
+        token.x = clamp(resolved.x, 0, Math.max(0, scene.width - token.size));
+        token.y = clamp(resolved.y, 0, Math.max(0, scene.height - token.size));
+        updateTokenNodeGeometry(token);
+        refreshVisionIfNeeded(token);
+        refreshInspectorMetaOnly();
+        queueCoordsUpdate(ev.clientX, ev.clientY);
+      };
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        renderObjects();
+        refreshInspectorMetaOnly();
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    }
+
+    function startTokenResize(e, token){
+      const scene = activeScene();
+      const centerX = token.x + token.size / 2;
+      const centerY = token.y + token.size / 2;
+      const startPoint = worldPoint(e.clientX, e.clientY);
+      const baseDist = Math.hypot(startPoint.x - centerX, startPoint.y - centerY);
+      const startSize = token.size;
+      const move = ev => {
+        const p = worldPoint(ev.clientX, ev.clientY);
+        const dist = Math.hypot(p.x - centerX, p.y - centerY);
+        let next = clamp(startSize + (dist - baseDist) * 1.6, 24, Math.max(scene.width, scene.height));
+        next = ev.shiftKey ? next : Math.max(scene.gridSize / 2, snap(next));
+        token.size = next;
+        token.x = clamp(centerX - next / 2, 0, Math.max(0, scene.width - next));
+        token.y = clamp(centerY - next / 2, 0, Math.max(0, scene.height - next));
+        updateTokenNodeGeometry(token);
+        refreshVisionIfNeeded(token);
+        refreshInspectorMetaOnly();
+        if(document.activeElement !== els.selectedTokenSizeInput) els.selectedTokenSizeInput.value = Math.round(token.size);
+      };
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        renderObjects();
+        refreshInspectorMetaOnly();
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    }
+
+    function startTokenRotate(e, token){
+      const cx = token.x + token.size / 2;
+      const cy = token.y + token.size / 2;
+      const move = ev => {
+        const p = worldPoint(ev.clientX, ev.clientY);
+        let angle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI + 90;
+        if(!ev.shiftKey) angle = Math.round(angle / 15) * 15;
+        token.rotation = angle;
+        updateTokenNodeGeometry(token);
+        refreshInspectorMetaOnly();
+        if(document.activeElement !== els.selectedTokenRotationInput) els.selectedTokenRotationInput.value = Math.round(token.rotation || 0);
+      };
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        refreshInspectorMetaOnly();
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    }
+
+    function startNoteDrag(e, note){
+      const scene = activeScene();
+      const start = worldPoint(e.clientX, e.clientY);
+      const baseX = note.x;
+      const baseY = note.y;
+      const move = ev => {
+        const p = worldPoint(ev.clientX, ev.clientY);
+        const nx = clamp(baseX + (p.x - start.x), 0, scene.width);
+        const ny = clamp(baseY + (p.y - start.y), 0, scene.height);
+        note.x = ev.shiftKey ? nx : snap(nx);
+        note.y = ev.shiftKey ? ny : snap(ny);
+        updateNoteNodeGeometry(note);
+        refreshInspectorMetaOnly();
+        queueCoordsUpdate(ev.clientX, ev.clientY);
+      };
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        renderObjects();
+        refreshInspectorMetaOnly();
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    }
+
+    function setTool(tool){
+      if(isPlayerRole() && !['select','pan'].includes(tool)) tool = 'select';
+      state.ui.tool = tool;
+      if(tool !== 'wall' && tool !== 'door'){
+        runtime.barrierDraft = null;
+        runtime.barrierPreview = null;
+      }
+      els.toolButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tool === tool));
+      renderBarriers();
+      updateStatus();
+    }
+
+    function bindEvents(){
+      els.createRoomBtn?.addEventListener('click', createRoomOnline);
+      els.joinRoomBtn?.addEventListener('click', joinRoomOnline);
+      els.joinRoomCodeInput?.addEventListener('input', () => { els.joinRoomCodeInput.value = normalizeRoomCode(els.joinRoomCodeInput.value); });
+      els.createNameInput?.addEventListener('input', () => { els.joinNameInput.value = els.createNameInput.value; });
+      els.joinNameInput?.addEventListener('input', () => { els.createNameInput.value = els.joinNameInput.value; });
+      els.tabs.forEach(btn => btn.addEventListener('click', () => { state.ui.activeTab = btn.dataset.tab; renderTabs(); }));
+      els.toggleSidebarBtn.addEventListener('click', () => { state.ui.sidebarOpen = !state.ui.sidebarOpen; applyAppClass(); });
+      els.campaignNameInput.addEventListener('input', () => { state.campaign.name = els.campaignNameInput.value; renderTop(); });
+      els.sessionNameInput.addEventListener('input', () => { state.campaign.sessionName = els.sessionNameInput.value; renderTop(); });
+
+      els.addSceneBtn.addEventListener('click', addScene);
+      els.duplicateSceneBtn.addEventListener('click', () => duplicateScene(state.campaign.currentSceneId));
+      els.sceneNameInput.addEventListener('input', () => { activeScene().name = els.sceneNameInput.value || 'Cena'; renderScenes(); renderTop(); updateView(); });
+      els.gridSizeInput.addEventListener('input', () => { activeScene().gridSize = Number(els.gridSizeInput.value); renderSceneFields(); renderGrid(); renderEntities(); });
+      els.applySceneSizeBtn.addEventListener('click', () => { resizeScene(els.sceneWidthInput.value, els.sceneHeightInput.value); renderAll(); fitScene(); });
+      els.sceneFogModeSelect.addEventListener('change', () => { activeScene().fogMode = els.sceneFogModeSelect.value; renderAll(); });
+      els.sceneFogOpacityInput.addEventListener('input', () => { activeScene().fogOpacity = Number(els.sceneFogOpacityInput.value); renderSceneFields(); renderFogOverlay(); });
+      els.sceneFogRadiusDefaultInput.addEventListener('input', () => {
+        const scene = activeScene();
+        const nextRadius = clamp(Number(els.sceneFogRadiusDefaultInput.value) || 280, 60, 2400);
+        scene.fogRadiusDefault = nextRadius;
+        scene.tokens.forEach(token => {
+          if(token.controlledBy && token.visionEnabled !== false) token.visionRadius = nextRadius;
+        });
+        renderSceneFields();
+        scheduleVisionRefresh(true);
+        refreshInspectorMetaOnly();
+      });
+      els.noteDraftInput.addEventListener('input', () => { state.ui.noteDraft = els.noteDraftInput.value; });
+      els.wallToolBtn?.addEventListener('click', () => { state.ui.sidebarOpen = true; setTool('wall'); });
+      els.doorToolBtn?.addEventListener('click', () => { state.ui.sidebarOpen = true; setTool('door'); });
+      els.cancelBarrierDraftBtn?.addEventListener('click', () => { runtime.barrierDraft = null; runtime.barrierPreview = null; renderBarriers(); updateStatus(); });
+
+      els.mapInput.addEventListener('change', async () => {
+        const file = els.mapInput.files?.[0];
+        if(!file) return;
+        activeScene().mapSrc = await uploadFileToRoom(file, 'maps');
+        els.mapInput.value = '';
+        loadSceneIntoCanvas();
+        renderAll();
+        requestAnimationFrame(fitScene);
+      });
+
+      els.assetInput.addEventListener('change', async () => {
+        const files = [...(els.assetInput.files || [])];
+        for(const file of files){
+          const src = await uploadFileToRoom(file, 'assets');
+          await addAsset(file.name, src);
+        }
+        els.assetInput.value = '';
+        renderAll();
+      });
+
+      els.importInput.addEventListener('change', async () => {
+        const file = els.importInput.files?.[0];
+        if(!file) return;
+        try { loadFromData(await file.text()); }
+        catch(err){ alert('Falha ao importar JSON.'); }
+        els.importInput.value = '';
+      });
+
+      els.createQuickTokenBtn.addEventListener('click', addQuickToken);
+      els.addPlayerBtn.addEventListener('click', addPlayer);
+      els.saveBtn.addEventListener('click', saveLocal);
+      els.loadBtn.addEventListener('click', loadLocal);
+      els.exportBtn.addEventListener('click', exportJson);
+      els.fitBtn.addEventListener('click', fitScene);
+      els.gridToggleBtn.addEventListener('click', () => { activeScene().layers.visibility.grid = !activeScene().layers.visibility.grid; renderAll(); });
+      if(els.snapToggleBtn) els.snapToggleBtn.addEventListener('click', () => { activeScene().snapEnabled = !activeScene().snapEnabled; renderAll(); });
+      els.previewModeBtn.addEventListener('click', () => {
+        if(isPlayerRole()) return;
+        state.ui.previewMode = state.ui.previewMode === 'gm' ? 'player' : 'gm';
+        runtime.gridCacheKey = '';
+        renderAll();
+      });
+
+      els.rollButtons.forEach(btn => btn.addEventListener('click', () => roll(btn.dataset.roll)));
+      els.addInitiativeBtn.addEventListener('click', () => {
+        const name = els.initiativeNameInput.value.trim();
+        const value = Number(els.initiativeValueInput.value || 0);
+        if(!name) return;
+        state.campaign.initiative.push({ id: uid(), name, value });
+        els.initiativeNameInput.value = '';
+        els.initiativeValueInput.value = '';
+        renderInitiative();
+      });
+      els.sortInitiativeBtn.addEventListener('click', () => {
+        state.campaign.initiative.sort((a,b) => (b.value||0) - (a.value||0));
+        renderInitiative();
+      });
+
+      els.selectedTokenNameInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.name = els.selectedTokenNameInput.value; refreshSelectedTokenNode(); renderObjects(); renderPlayers(); refreshInspectorMetaOnly(); }});
+      els.selectedTokenSizeInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.size = clamp(Number(els.selectedTokenSizeInput.value || token.size), 24, 4096); updateTokenNodeGeometry(token); refreshVisionIfNeeded(token); refreshInspectorMetaOnly(); }});
+      els.selectedTokenRotationInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.rotation = Number(els.selectedTokenRotationInput.value || 0); updateTokenNodeGeometry(token); refreshInspectorMetaOnly(); }});
+      els.selectedTokenOwnerSelect.addEventListener('change', () => { const token = selectedToken(); if(token){ token.controlledBy = els.selectedTokenOwnerSelect.value; refreshSelectedTokenNode(); renderPlayers(); renderObjects(); scheduleVisionRefresh(true); }});
+      els.selectedTokenHiddenCheck.addEventListener('change', () => { const token = selectedToken(); if(token){ token.hidden = els.selectedTokenHiddenCheck.value === 'hidden'; renderAll(); }});
+      els.selectedTokenVisionEnabled.addEventListener('change', () => { const token = selectedToken(); if(token){ token.visionEnabled = els.selectedTokenVisionEnabled.value === 'on'; renderAll(); }});
+      els.selectedTokenVisionRadiusInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.visionRadius = clamp(Number(els.selectedTokenVisionRadiusInput.value || token.visionRadius), 60, 2400); scheduleVisionRefresh(true); refreshInspectorMetaOnly(); }});
+      els.selectedTokenVisionSoftnessInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.visionSoftness = clamp(Number(els.selectedTokenVisionSoftnessInput.value || token.visionSoftness), 0, 800); scheduleVisionRefresh(false); }});
+      els.selectedBarrierTypeSelect?.addEventListener('change', () => { const barrier = selectedBarrier(); if(barrier){ barrier.type = els.selectedBarrierTypeSelect.value === 'door' ? 'door' : 'wall'; if(barrier.type !== 'door') barrier.open = false; invalidateSceneCaches(activeScene()); renderAll(); }});
+      els.selectedDoorStateSelect?.addEventListener('change', () => { const barrier = selectedBarrier(); if(barrier){ barrier.open = els.selectedDoorStateSelect.value === 'open'; invalidateSceneCaches(activeScene()); renderAll(); }});
+      els.selectedTokenHitboxMode.addEventListener('change', () => {
+        const token = selectedToken();
+        if(!token) return;
+        token.hitboxMode = els.selectedTokenHitboxMode.value === 'contour' && token.contourPolygon ? 'contour' : 'box';
+        refreshSelectedTokenNode();
+        refreshInspectorMetaOnly();
+      });
+      els.snapSelectedBtn.addEventListener('click', () => { const token = selectedToken(); if(token){ token.x = snap(token.x); token.y = snap(token.y); token.size = Math.max(activeScene().gridSize / 2, snap(token.size)); renderAll(); }});
+      els.duplicateSelectedBtn.addEventListener('click', duplicateSelected);
+      els.selectedNoteTextInput.addEventListener('input', () => { const note = selectedNote(); if(note){ note.text = els.selectedNoteTextInput.value; refreshSelectedNoteNode(); renderObjects(); refreshInspectorMetaOnly(); }});
+      els.selectedNoteVisibilitySelect.addEventListener('change', () => { const note = selectedNote(); if(note){ note.gmOnly = els.selectedNoteVisibilitySelect.value === 'gm'; renderAll(); }});
+      els.deleteSelectedBtn.addEventListener('click', deleteSelected);
+
+      els.viewport.addEventListener('pointerdown', handleViewportPointerDown);
+      els.viewport.addEventListener('pointermove', e => {
+        queueCoordsUpdate(e.clientX, e.clientY);
+        if(runtime.barrierDraft && (state.ui.tool === 'wall' || state.ui.tool === 'door')){
+          const point = worldPoint(e.clientX, e.clientY);
+          runtime.barrierPreview = { x2: e.shiftKey ? point.x : snap(point.x), y2: e.shiftKey ? point.y : snap(point.y) };
+          renderBarriers();
+        }
+      });
+      els.viewport.addEventListener('wheel', e => {
+        e.preventDefault();
+        const rect = els.viewport.getBoundingClientRect();
+        adjustZoom(activeScene().zoom + (e.deltaY < 0 ? 0.08 : -0.08), e.clientX - rect.left, e.clientY - rect.top);
+      }, {passive:false});
+
+      els.zoomOutBtn.addEventListener('click', () => adjustZoom(activeScene().zoom - .1));
+      els.zoomInBtn.addEventListener('click', () => adjustZoom(activeScene().zoom + .1));
+      els.zoomResetBtn.addEventListener('click', () => adjustZoom(1));
+      els.toolButtons.forEach(btn => btn.addEventListener('click', () => setTool(btn.dataset.tool)));
+
+      window.addEventListener('keydown', e => {
+        if(e.ctrlKey && e.key.toLowerCase() === 's'){ e.preventDefault(); saveLocal(); }
+        if(e.key === 'Delete' || e.key === 'Backspace'){
+          const isTyping = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName);
+          if(!isTyping){ e.preventDefault(); deleteSelected(); }
+        }
+        if(['1','2','3','4','5'].includes(e.key)){
+          const tools = { '1':'select', '2':'pan', '3':'note', '4':'wall', '5':'door' };
+          setTool(tools[e.key]);
+        }
+        if(e.key === 'Escape' && runtime.barrierDraft){
+          runtime.barrierDraft = null;
+          runtime.barrierPreview = null;
+          renderBarriers();
+          updateStatus();
+        }
+        if(e.key.toLowerCase() === 'g'){ activeScene().layers.visibility.grid = !activeScene().layers.visibility.grid; renderAll(); }
+      });
+
+      window.addEventListener('resize', () => updateView());
+    }
+
+    function fileToDataUrl(file){
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+
+    const __renderAll = renderAll;
+    renderAll = function(...args){
+      const result = __renderAll.apply(this, args);
+      renderRoomMeta();
+      scheduleRoomSave(false);
+      return result;
+    };
+    const __renderPlayers = renderPlayers;
+    renderPlayers = function(...args){
+      const result = __renderPlayers.apply(this, args);
+      scheduleRoomSave(false);
+      return result;
+    };
+    const __renderInitiative = renderInitiative;
+    renderInitiative = function(...args){
+      const result = __renderInitiative.apply(this, args);
+      scheduleRoomSave(false);
+      return result;
+    };
+    const __renderDiceLog = renderDiceLog;
+    renderDiceLog = function(...args){
+      const result = __renderDiceLog.apply(this, args);
+      scheduleRoomSave(false);
+      return result;
+    };
+
+    seed();
+    preloadLobby();
+    bindEvents();
+    loadSceneIntoCanvas();
+    renderAll();
+    enrichAssetsWithContours();
+    requestAnimationFrame(fitScene);
+  </script>
+</body>
+</html>
