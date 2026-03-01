@@ -1,0 +1,17 @@
+{
+  "defaultMap": "./assets/maps/exemplo-taverna.svg",
+  "assets": [
+    {
+      "name": "Coelho Branco",
+      "src": "./assets/tokens/coelho-branco.svg"
+    },
+    {
+      "name": "Cultista",
+      "src": "./assets/tokens/cultista.svg"
+    },
+    {
+      "name": "Marcador Roxo",
+      "src": "./assets/tokens/marcador-roxo.svg"
+    }
+  ]
+}

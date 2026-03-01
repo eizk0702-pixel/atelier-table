@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#140f24"/>
+      <stop offset="100%" stop-color="#24153a"/>
+    </linearGradient>
+    <radialGradient id="light" cx="50%" cy="42%" r="60%">
+      <stop offset="0%" stop-color="#4b2b78" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#4b2b78" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <rect width="1920" height="1080" fill="url(#light)"/>
+  <g fill="#0f0c1c" stroke="#7b4dca" stroke-opacity="0.45" stroke-width="8">
+    <rect x="160" y="120" width="1600" height="840" rx="28"/>
+    <rect x="300" y="260" width="540" height="280" rx="18"/>
+    <rect x="1080" y="240" width="480" height="180" rx="18"/>
+    <rect x="1020" y="520" width="600" height="260" rx="18"/>
+  </g>
+  <g fill="#261a3e" stroke="#a86cff" stroke-opacity="0.28" stroke-width="4">
+    <circle cx="570" cy="400" r="58"/>
+    <circle cx="1250" cy="330" r="44"/>
+    <circle cx="1460" cy="650" r="62"/>
+  </g>
+  <g fill="#d7b3ff" fill-opacity="0.12">
+    <circle cx="570" cy="400" r="110"/>
+    <circle cx="1250" cy="330" r="90"/>
+    <circle cx="1460" cy="650" r="120"/>
+  </g>
+  <text x="960" y="84" text-anchor="middle" fill="#efe7ff" font-size="42" font-family="Arial, Helvetica, sans-serif">Mapa de exemplo • troque em assets/maps/</text>
+  <text x="960" y="1030" text-anchor="middle" fill="#a991d7" font-size="24" font-family="Arial, Helvetica, sans-serif">GitHub Pages serve a imagem. Firestore sincroniza a mesa. O resto é só trabalho, infelizmente.</text>
+</svg>
