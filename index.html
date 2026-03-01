@@ -3655,12 +3655,16 @@
         refreshInspectorMetaOnly();
         queueCoordsUpdate(ev.clientX, ev.clientY);
       };
-      const up = () => {
-        window.removeEventListener('pointermove', move);
-        window.removeEventListener('pointerup', up);
-        renderObjects();
-        refreshInspectorMetaOnly();
-      };
+    const up = () => {
+  window.removeEventListener('pointermove', move);
+  window.removeEventListener('pointerup', up);
+
+  renderObjects();
+  refreshInspectorMetaOnly();
+
+  // 🔥 COMMIT: envia a posição final pro Firestore (players veem)
+  scheduleRoomSave(true);
+};
       window.addEventListener('pointermove', move);
       window.addEventListener('pointerup', up);
     }
@@ -3685,12 +3689,16 @@
         refreshInspectorMetaOnly();
         if(document.activeElement !== els.selectedTokenSizeInput) els.selectedTokenSizeInput.value = Math.round(token.size);
       };
-      const up = () => {
-        window.removeEventListener('pointermove', move);
-        window.removeEventListener('pointerup', up);
-        renderObjects();
-        refreshInspectorMetaOnly();
-      };
+     const up = () => {
+  window.removeEventListener('pointermove', move);
+  window.removeEventListener('pointerup', up);
+
+  renderObjects();
+  refreshInspectorMetaOnly();
+
+  // 🔥 COMMIT: envia o tamanho final pro Firestore
+  scheduleRoomSave(true);
+};
       window.addEventListener('pointermove', move);
       window.addEventListener('pointerup', up);
     }
@@ -3708,10 +3716,17 @@
         if(document.activeElement !== els.selectedTokenRotationInput) els.selectedTokenRotationInput.value = Math.round(token.rotation || 0);
       };
       const up = () => {
-        window.removeEventListener('pointermove', move);
-        window.removeEventListener('pointerup', up);
-        refreshInspectorMetaOnly();
-      };
+  window.removeEventListener('pointermove', move);
+  window.removeEventListener('pointerup', up);
+
+  refreshInspectorMetaOnly();
+
+  // opcional, mas ajuda a garantir DOM consistente em alguns casos
+  renderObjects();
+
+  // 🔥 COMMIT: envia a rotação final pro Firestore
+  scheduleRoomSave(true);
+};
       window.addEventListener('pointermove', move);
       window.addEventListener('pointerup', up);
     }
@@ -3731,12 +3746,16 @@
         refreshInspectorMetaOnly();
         queueCoordsUpdate(ev.clientX, ev.clientY);
       };
-      const up = () => {
-        window.removeEventListener('pointermove', move);
-        window.removeEventListener('pointerup', up);
-        renderObjects();
-        refreshInspectorMetaOnly();
-      };
+    const up = () => {
+  window.removeEventListener('pointermove', move);
+  window.removeEventListener('pointerup', up);
+
+  renderObjects();
+  refreshInspectorMetaOnly();
+
+  // 🔥 COMMIT: envia posição final da nota pro Firestore
+  scheduleRoomSave(true);
+};
       window.addEventListener('pointermove', move);
       window.addEventListener('pointerup', up);
     }
@@ -3851,8 +3870,29 @@
       });
 
       els.selectedTokenNameInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.name = els.selectedTokenNameInput.value; refreshSelectedTokenNode(); renderObjects(); renderPlayers(); refreshInspectorMetaOnly(); }});
-      els.selectedTokenSizeInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.size = clamp(Number(els.selectedTokenSizeInput.value || token.size), 24, 4096); updateTokenNodeGeometry(token); refreshVisionIfNeeded(token); refreshInspectorMetaOnly(); }});
-      els.selectedTokenRotationInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.rotation = Number(els.selectedTokenRotationInput.value || 0); updateTokenNodeGeometry(token); refreshInspectorMetaOnly(); }});
+ els.selectedTokenSizeInput.addEventListener('input', () => {
+  const token = selectedToken();
+  if(token){
+    token.size = clamp(Number(els.selectedTokenSizeInput.value || token.size), 24, 4096);
+    updateTokenNodeGeometry(token);
+    refreshVisionIfNeeded(token);
+    refreshInspectorMetaOnly();
+
+    // salva “debounced” enquanto digita
+    scheduleRoomSave(false);
+  }
+});
+     els.selectedTokenRotationInput.addEventListener('input', () => {
+  const token = selectedToken();
+  if(token){
+    token.rotation = Number(els.selectedTokenRotationInput.value || 0);
+    updateTokenNodeGeometry(token);
+    refreshInspectorMetaOnly();
+
+    // salva “debounced” enquanto digita
+    scheduleRoomSave(false);
+  }
+});
       els.selectedTokenOwnerSelect.addEventListener('change', () => { const token = selectedToken(); if(token){ token.controlledBy = els.selectedTokenOwnerSelect.value; refreshSelectedTokenNode(); renderPlayers(); renderObjects(); scheduleVisionRefresh(true); }});
       els.selectedTokenHiddenCheck.addEventListener('change', () => { const token = selectedToken(); if(token){ token.hidden = els.selectedTokenHiddenCheck.value === 'hidden'; renderAll(); }});
       els.selectedTokenVisionEnabled.addEventListener('change', () => { const token = selectedToken(); if(token){ token.visionEnabled = els.selectedTokenVisionEnabled.value === 'on'; renderAll(); }});
@@ -3869,7 +3909,17 @@
       });
       els.snapSelectedBtn.addEventListener('click', () => { const token = selectedToken(); if(token){ token.x = snap(token.x); token.y = snap(token.y); token.size = Math.max(activeScene().gridSize / 2, snap(token.size)); renderAll(); }});
       els.duplicateSelectedBtn.addEventListener('click', duplicateSelected);
-      els.selectedNoteTextInput.addEventListener('input', () => { const note = selectedNote(); if(note){ note.text = els.selectedNoteTextInput.value; refreshSelectedNoteNode(); renderObjects(); refreshInspectorMetaOnly(); }});
+     els.selectedNoteTextInput.addEventListener('input', () => {
+  const note = selectedNote();
+  if(note){
+    note.text = els.selectedNoteTextInput.value;
+    refreshSelectedNoteNode();
+    renderObjects();
+    refreshInspectorMetaOnly();
+
+    scheduleRoomSave(false);
+  }
+});
       els.selectedNoteVisibilitySelect.addEventListener('change', () => { const note = selectedNote(); if(note){ note.gmOnly = els.selectedNoteVisibilitySelect.value === 'gm'; renderAll(); }});
       els.deleteSelectedBtn.addEventListener('click', deleteSelected);
 
