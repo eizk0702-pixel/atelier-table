@@ -1390,6 +1390,7 @@
     const els = {
       app: document.getElementById('app'),
       brandMeta: document.getElementById('brandMeta'),
+      roomHint: document.getElementById('roomHint'),
       toggleSidebarBtn: document.getElementById('toggleSidebarBtn'),
       campaignNameInput: document.getElementById('campaignNameInput'),
       sessionNameInput: document.getElementById('sessionNameInput'),
@@ -1692,7 +1693,7 @@
     function scheduleRoomSave(force=false){
       if(!firebaseEnabled || !db || !session.roomId || session.applyingRemote) return;
       clearTimeout(session.saveTimer);
-      session.saveTimer = window.setTimeout(() => { void saveRoomState(force); }, force ? 0 : 120);
+      session.saveTimer = window.setTimeout(() => { void saveRoomState(force); }, force ? 0 : 320);
     }
 
     async function saveRoomState(force=false){
@@ -1835,19 +1836,15 @@
       }
     }
 
-    function preloadLobby(){
-      updateFirebaseBadge();
-      const savedName = localStorage.getItem('atelier-table-profile-name') || '';
-      if(savedName){
-        els.createNameInput.value = savedName;
-        els.joinNameInput.value = savedName;
-      }
-      const roomFromUrl = normalizeRoomCode(new URLSearchParams(window.location.search).get('room') || '');
-      if(roomFromUrl) els.joinRoomCodeInput.value = roomFromUrl;
-      els.roomHint.textContent = firebaseEnabled
-        ? 'Firebase detectado. Crie a sala como mestre ou entre com o código do mestre.'
-        : 'Abra firebase-config.js, cole a configuração do seu projeto Firebase e publique no GitHub Pages. Sem isso o site abre, mas a mesa não sincroniza.';
-    }
+   function preloadLobby(){
+  const roomHintEl = document.getElementById('roomHint');
+
+  if (roomHintEl) {
+    roomHintEl.textContent = firebaseEnabled
+      ? 'Firebase pronto. Crie uma sala ou entre com um código.'
+      : 'Firebase pendente. Revise o arquivo firebase-config.js.';
+  }
+}
 
     function uid(){ return Math.random().toString(36).slice(2,10); }
     function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
@@ -3656,7 +3653,6 @@
         updateTokenNodeGeometry(token);
         refreshVisionIfNeeded(token);
         refreshInspectorMetaOnly();
-        scheduleRoomSave(false);
         queueCoordsUpdate(ev.clientX, ev.clientY);
       };
       const up = () => {
@@ -3688,7 +3684,6 @@
         refreshVisionIfNeeded(token);
         refreshInspectorMetaOnly();
         if(document.activeElement !== els.selectedTokenSizeInput) els.selectedTokenSizeInput.value = Math.round(token.size);
-        scheduleRoomSave(false);
       };
       const up = () => {
         window.removeEventListener('pointermove', move);
@@ -3711,7 +3706,6 @@
         updateTokenNodeGeometry(token);
         refreshInspectorMetaOnly();
         if(document.activeElement !== els.selectedTokenRotationInput) els.selectedTokenRotationInput.value = Math.round(token.rotation || 0);
-        scheduleRoomSave(false);
       };
       const up = () => {
         window.removeEventListener('pointermove', move);
@@ -3735,7 +3729,6 @@
         note.y = ev.shiftKey ? ny : snap(ny);
         updateNoteNodeGeometry(note);
         refreshInspectorMetaOnly();
-        scheduleRoomSave(false);
         queueCoordsUpdate(ev.clientX, ev.clientY);
       };
       const up = () => {
@@ -3768,8 +3761,8 @@
       els.joinNameInput?.addEventListener('input', () => { els.createNameInput.value = els.joinNameInput.value; });
       els.tabs.forEach(btn => btn.addEventListener('click', () => { state.ui.activeTab = btn.dataset.tab; renderTabs(); }));
       els.toggleSidebarBtn.addEventListener('click', () => { state.ui.sidebarOpen = !state.ui.sidebarOpen; applyAppClass(); });
-      els.campaignNameInput.addEventListener('input', () => { state.campaign.name = els.campaignNameInput.value; renderTop(); scheduleRoomSave(false); });
-      els.sessionNameInput.addEventListener('input', () => { state.campaign.sessionName = els.sessionNameInput.value; renderTop(); scheduleRoomSave(false); });
+      els.campaignNameInput.addEventListener('input', () => { state.campaign.name = els.campaignNameInput.value; renderTop(); });
+      els.sessionNameInput.addEventListener('input', () => { state.campaign.sessionName = els.sessionNameInput.value; renderTop(); });
 
       els.addSceneBtn.addEventListener('click', addScene);
       els.duplicateSceneBtn.addEventListener('click', () => duplicateScene(state.campaign.currentSceneId));
@@ -3778,11 +3771,11 @@
       els.changeMapUrlBtn?.addEventListener('click', setMapFromUrlPrompt);
       els.welcomeMapUrlBtn?.addEventListener('click', setMapFromUrlPrompt);
       els.welcomeAssetUrlBtn?.addEventListener('click', addAssetFromUrlPrompt);
-      els.sceneNameInput.addEventListener('input', () => { activeScene().name = els.sceneNameInput.value || 'Cena'; renderScenes(); renderTop(); updateView(); scheduleRoomSave(false); });
-      els.gridSizeInput.addEventListener('input', () => { activeScene().gridSize = Number(els.gridSizeInput.value); renderSceneFields(); renderGrid(); renderEntities(); scheduleRoomSave(false); });
+      els.sceneNameInput.addEventListener('input', () => { activeScene().name = els.sceneNameInput.value || 'Cena'; renderScenes(); renderTop(); updateView(); });
+      els.gridSizeInput.addEventListener('input', () => { activeScene().gridSize = Number(els.gridSizeInput.value); renderSceneFields(); renderGrid(); renderEntities(); });
       els.applySceneSizeBtn.addEventListener('click', () => { resizeScene(els.sceneWidthInput.value, els.sceneHeightInput.value); renderAll(); fitScene(); });
-      els.sceneFogModeSelect.addEventListener('change', () => { activeScene().fogMode = els.sceneFogModeSelect.value; renderAll(); scheduleRoomSave(false); });
-      els.sceneFogOpacityInput.addEventListener('input', () => { activeScene().fogOpacity = Number(els.sceneFogOpacityInput.value); renderSceneFields(); renderFogOverlay(); scheduleRoomSave(false); });
+      els.sceneFogModeSelect.addEventListener('change', () => { activeScene().fogMode = els.sceneFogModeSelect.value; renderAll(); });
+      els.sceneFogOpacityInput.addEventListener('input', () => { activeScene().fogOpacity = Number(els.sceneFogOpacityInput.value); renderSceneFields(); renderFogOverlay(); });
       els.sceneFogRadiusDefaultInput.addEventListener('input', () => {
         const scene = activeScene();
         const nextRadius = clamp(Number(els.sceneFogRadiusDefaultInput.value) || 280, 60, 2400);
@@ -3793,7 +3786,6 @@
         renderSceneFields();
         scheduleVisionRefresh(true);
         refreshInspectorMetaOnly();
-        scheduleRoomSave(false);
       });
       els.noteDraftInput.addEventListener('input', () => { state.ui.noteDraft = els.noteDraftInput.value; });
       els.wallToolBtn?.addEventListener('click', () => { state.ui.sidebarOpen = true; setTool('wall'); });
@@ -3858,28 +3850,27 @@
         renderInitiative();
       });
 
-      els.selectedTokenNameInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.name = els.selectedTokenNameInput.value; refreshSelectedTokenNode(); renderObjects(); renderPlayers(); refreshInspectorMetaOnly(); scheduleRoomSave(false); }});
-      els.selectedTokenSizeInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.size = clamp(Number(els.selectedTokenSizeInput.value || token.size), 24, 4096); updateTokenNodeGeometry(token); refreshVisionIfNeeded(token); refreshInspectorMetaOnly(); scheduleRoomSave(false); }});
-      els.selectedTokenRotationInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.rotation = Number(els.selectedTokenRotationInput.value || 0); updateTokenNodeGeometry(token); refreshInspectorMetaOnly(); scheduleRoomSave(false); }});
-      els.selectedTokenOwnerSelect.addEventListener('change', () => { const token = selectedToken(); if(token){ token.controlledBy = els.selectedTokenOwnerSelect.value; refreshSelectedTokenNode(); renderPlayers(); renderObjects(); scheduleVisionRefresh(true); scheduleRoomSave(false); }});
-      els.selectedTokenHiddenCheck.addEventListener('change', () => { const token = selectedToken(); if(token){ token.hidden = els.selectedTokenHiddenCheck.value === 'hidden'; renderAll(); scheduleRoomSave(false); }});
-      els.selectedTokenVisionEnabled.addEventListener('change', () => { const token = selectedToken(); if(token){ token.visionEnabled = els.selectedTokenVisionEnabled.value === 'on'; renderAll(); scheduleRoomSave(false); }});
-      els.selectedTokenVisionRadiusInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.visionRadius = clamp(Number(els.selectedTokenVisionRadiusInput.value || token.visionRadius), 60, 2400); scheduleVisionRefresh(true); refreshInspectorMetaOnly(); scheduleRoomSave(false); }});
-      els.selectedTokenVisionSoftnessInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.visionSoftness = clamp(Number(els.selectedTokenVisionSoftnessInput.value || token.visionSoftness), 0, 800); scheduleVisionRefresh(false); scheduleRoomSave(false); }});
-      els.selectedBarrierTypeSelect?.addEventListener('change', () => { const barrier = selectedBarrier(); if(barrier){ barrier.type = els.selectedBarrierTypeSelect.value === 'door' ? 'door' : 'wall'; if(barrier.type !== 'door') barrier.open = false; invalidateSceneCaches(activeScene()); renderAll(); scheduleRoomSave(false); }});
-      els.selectedDoorStateSelect?.addEventListener('change', () => { const barrier = selectedBarrier(); if(barrier){ barrier.open = els.selectedDoorStateSelect.value === 'open'; invalidateSceneCaches(activeScene()); renderAll(); scheduleRoomSave(false); }});
+      els.selectedTokenNameInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.name = els.selectedTokenNameInput.value; refreshSelectedTokenNode(); renderObjects(); renderPlayers(); refreshInspectorMetaOnly(); }});
+      els.selectedTokenSizeInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.size = clamp(Number(els.selectedTokenSizeInput.value || token.size), 24, 4096); updateTokenNodeGeometry(token); refreshVisionIfNeeded(token); refreshInspectorMetaOnly(); }});
+      els.selectedTokenRotationInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.rotation = Number(els.selectedTokenRotationInput.value || 0); updateTokenNodeGeometry(token); refreshInspectorMetaOnly(); }});
+      els.selectedTokenOwnerSelect.addEventListener('change', () => { const token = selectedToken(); if(token){ token.controlledBy = els.selectedTokenOwnerSelect.value; refreshSelectedTokenNode(); renderPlayers(); renderObjects(); scheduleVisionRefresh(true); }});
+      els.selectedTokenHiddenCheck.addEventListener('change', () => { const token = selectedToken(); if(token){ token.hidden = els.selectedTokenHiddenCheck.value === 'hidden'; renderAll(); }});
+      els.selectedTokenVisionEnabled.addEventListener('change', () => { const token = selectedToken(); if(token){ token.visionEnabled = els.selectedTokenVisionEnabled.value === 'on'; renderAll(); }});
+      els.selectedTokenVisionRadiusInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.visionRadius = clamp(Number(els.selectedTokenVisionRadiusInput.value || token.visionRadius), 60, 2400); scheduleVisionRefresh(true); refreshInspectorMetaOnly(); }});
+      els.selectedTokenVisionSoftnessInput.addEventListener('input', () => { const token = selectedToken(); if(token){ token.visionSoftness = clamp(Number(els.selectedTokenVisionSoftnessInput.value || token.visionSoftness), 0, 800); scheduleVisionRefresh(false); }});
+      els.selectedBarrierTypeSelect?.addEventListener('change', () => { const barrier = selectedBarrier(); if(barrier){ barrier.type = els.selectedBarrierTypeSelect.value === 'door' ? 'door' : 'wall'; if(barrier.type !== 'door') barrier.open = false; invalidateSceneCaches(activeScene()); renderAll(); }});
+      els.selectedDoorStateSelect?.addEventListener('change', () => { const barrier = selectedBarrier(); if(barrier){ barrier.open = els.selectedDoorStateSelect.value === 'open'; invalidateSceneCaches(activeScene()); renderAll(); }});
       els.selectedTokenHitboxMode.addEventListener('change', () => {
         const token = selectedToken();
         if(!token) return;
         token.hitboxMode = els.selectedTokenHitboxMode.value === 'contour' && token.contourPolygon ? 'contour' : 'box';
         refreshSelectedTokenNode();
         refreshInspectorMetaOnly();
-        scheduleRoomSave(false);
       });
       els.snapSelectedBtn.addEventListener('click', () => { const token = selectedToken(); if(token){ token.x = snap(token.x); token.y = snap(token.y); token.size = Math.max(activeScene().gridSize / 2, snap(token.size)); renderAll(); }});
       els.duplicateSelectedBtn.addEventListener('click', duplicateSelected);
-      els.selectedNoteTextInput.addEventListener('input', () => { const note = selectedNote(); if(note){ note.text = els.selectedNoteTextInput.value; refreshSelectedNoteNode(); renderObjects(); refreshInspectorMetaOnly(); scheduleRoomSave(false); }});
-      els.selectedNoteVisibilitySelect.addEventListener('change', () => { const note = selectedNote(); if(note){ note.gmOnly = els.selectedNoteVisibilitySelect.value === 'gm'; renderAll(); scheduleRoomSave(false); }});
+      els.selectedNoteTextInput.addEventListener('input', () => { const note = selectedNote(); if(note){ note.text = els.selectedNoteTextInput.value; refreshSelectedNoteNode(); renderObjects(); refreshInspectorMetaOnly(); }});
+      els.selectedNoteVisibilitySelect.addEventListener('change', () => { const note = selectedNote(); if(note){ note.gmOnly = els.selectedNoteVisibilitySelect.value === 'gm'; renderAll(); }});
       els.deleteSelectedBtn.addEventListener('click', deleteSelected);
 
       els.viewport.addEventListener('pointerdown', handleViewportPointerDown);
@@ -3938,24 +3929,6 @@
     renderAll = function(...args){
       const result = __renderAll.apply(this, args);
       renderRoomMeta();
-      scheduleRoomSave(false);
-      return result;
-    };
-    const __renderObjects = renderObjects;
-    renderObjects = function(...args){
-      const result = __renderObjects.apply(this, args);
-      scheduleRoomSave(false);
-      return result;
-    };
-    const __renderSceneFields = renderSceneFields;
-    renderSceneFields = function(...args){
-      const result = __renderSceneFields.apply(this, args);
-      scheduleRoomSave(false);
-      return result;
-    };
-    const __renderTop = renderTop;
-    renderTop = function(...args){
-      const result = __renderTop.apply(this, args);
       scheduleRoomSave(false);
       return result;
     };
