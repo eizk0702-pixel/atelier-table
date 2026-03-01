@@ -1836,19 +1836,15 @@
       }
     }
 
-    function preloadLobby(){
-      updateFirebaseBadge();
-      const savedName = localStorage.getItem('atelier-table-profile-name') || '';
-      if(savedName){
-        els.createNameInput.value = savedName;
-        els.joinNameInput.value = savedName;
-      }
-      const roomFromUrl = normalizeRoomCode(new URLSearchParams(window.location.search).get('room') || '');
-      if(roomFromUrl) els.joinRoomCodeInput.value = roomFromUrl;
-      els.roomHint.textContent = firebaseEnabled
-        ? 'Firebase detectado. Crie a sala como mestre ou entre com o código do mestre.'
-        : 'Abra firebase-config.js, cole a configuração do seu projeto Firebase e publique no GitHub Pages. Sem isso o site abre, mas a mesa não sincroniza.';
-    }
+   function preloadLobby(){
+  const roomHintEl = document.getElementById('roomHint');
+
+  if (roomHintEl) {
+    roomHintEl.textContent = firebaseEnabled
+      ? 'Firebase pronto. Crie uma sala ou entre com um código.'
+      : 'Firebase pendente. Revise o arquivo firebase-config.js.';
+  }
+}
 
     function uid(){ return Math.random().toString(36).slice(2,10); }
     function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
